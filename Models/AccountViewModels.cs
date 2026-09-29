@@ -51,5 +51,7 @@ public class RegisterViewModel
     [Display(Name = "Phone Number")]
     public string PhoneNumber { get; set; } = string.Empty;
 
+    [RegularExpression("^(Poblacion|Talomo|Agdao|Buhangin|Bunawan|Toril|Tugbok|Calinan)$", ErrorMessage = "Please choose a covered Davao City district.")]
+    [Display(Name = "District (covered Davao City zone)")]
     public string? District { get; set; }
 }

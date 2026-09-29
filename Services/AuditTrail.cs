@@ -17,6 +17,7 @@ public static class AuditTrail
     public const string Refund = "Refund";
     public const string Claim = "Claim";
     public const string Adjust = "Adjust";
+    public const string Promo = "Promo";
 
     public static void Record(
         ApplicationDbContext context,

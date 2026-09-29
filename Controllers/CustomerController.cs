@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using LaundryHub2._0.Data;
 using LaundryHub2._0.Models;
 
 namespace LaundryHub2._0.Controllers;
 
-[Authorize(Roles = "Customer,Admin")]
+[Authorize(Roles = "Customer")]
 public class CustomerController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -37,7 +38,7 @@ public class CustomerController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? tab = null)
+    public async Task<IActionResult> Index(string? tab = null, [FromQuery(Name = "order")] int? trackingOrder = null)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -64,31 +65,45 @@ public class CustomerController : Controller
 
         foreach (var order in orders)
         {
-            if (!order.IsPaymentConfirmed && order.TotalAmount.HasValue && order.ReadyForDeliveryNotifiedAt.HasValue && !order.IsAbandoned)
+            // Only process unpaid, non-abandoned orders that have a stored payment deadline.
+            if (!order.IsPaymentConfirmed && order.TotalAmount.HasValue && order.PaymentDeadlineAt.HasValue && !order.IsAbandoned)
             {
-                var deadline = order.ReadyForDeliveryNotifiedAt.Value.AddHours(24);
+                var deadline = order.PaymentDeadlineAt.Value;
+                var gracePeriodEnd = order.GracePeriodEndAt ?? deadline.AddHours(72);
+
                 if (now > deadline)
                 {
-                    var overdueSpan = now - deadline;
-                    var daysOverdue = (decimal)overdueSpan.TotalDays;
-
-                    // Penalty: 3% of TotalAmount per day overdue, capped at 30%
-                    var rawPenalty = daysOverdue * 0.03m * order.TotalAmount.Value;
-                    var maxPenalty = order.TotalAmount.Value * 0.30m;
-                    order.AccruedPenaltyAmount = Math.Round(Math.Min(rawPenalty, maxPenalty), 2);
-
-                    // Abandonment at 15 days overdue
-                    if (daysOverdue >= 15m)
+                    // Abandonment: exactly 15 days after the ORIGINAL payment deadline.
+                    if (now >= deadline.AddDays(15))
                     {
                         order.IsAbandoned = true;
                         order.AbandonedAt = now;
                         order.Status = OrderStatus.Abandoned;
                         order.UpdatedAt = now;
+                        order.AccruedPenaltyAmount = Math.Round(order.TotalAmount.Value * 0.30m, 2); // cap
+                        ordersModified = true;
                     }
-                    ordersModified = true;
+                    else if (now > gracePeriodEnd)
+                    {
+                        // Penalty: 3% of TotalAmount per day overdue (measured from GracePeriodEndAt),
+                        // capped at 30% (10 days).
+                        var overdueSpan = now - gracePeriodEnd;
+                        var daysOverdue = (decimal)overdueSpan.TotalDays;
+                        var rawPenalty = daysOverdue * 0.03m * order.TotalAmount.Value;
+                        var maxPenalty = order.TotalAmount.Value * 0.30m;
+                        order.AccruedPenaltyAmount = Math.Round(Math.Min(rawPenalty, maxPenalty), 2);
+                        ordersModified = true;
+                    }
+                    else
+                    {
+                        // Inside 72-hour grace period: no penalty yet.
+                        order.AccruedPenaltyAmount = 0m;
+                        ordersModified = true;
+                    }
                 }
                 else
                 {
+                    // Before deadline: no penalty.
                     order.AccruedPenaltyAmount = 0m;
                 }
             }
@@ -112,7 +127,7 @@ public class CustomerController : Controller
             .Take(30)
             .ToListAsync();
         var loyaltyDiscounts = new Dictionary<int, decimal>();
-        foreach (var order in orders.Where(o => !o.IsPaymentConfirmed && o.TotalAmount.HasValue))
+        foreach (var order in orders.Where(o => o.TotalAmount.HasValue))
             loyaltyDiscounts[order.Id] = await _loyaltyService.GetRedeemedDiscountAsync(order.Id, order.TotalAmount ?? 0m);
 
         var model = new CustomerDashboardViewModel
@@ -126,12 +141,20 @@ public class CustomerController : Controller
             LoyaltyDiscounts = loyaltyDiscounts
         };
 
+        // Deep link: ?tab=tracking&order=<id> shows exactly that order when it belongs
+        // to the caller; anything else falls back to the default selection in the view.
+        int? trackingOrderId = null;
+        if (trackingOrder.HasValue && orders.Any(o => o.Id == trackingOrder.Value))
+            trackingOrderId = trackingOrder.Value;
+
         ViewData["ActiveTab"] = tab ?? "dashboard";
+        ViewData["TrackingOrderId"] = trackingOrderId;
         return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("action-policy")]
     public async Task<IActionResult> BookPickup(BookPickupInputModel input)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -152,10 +175,29 @@ public class CustomerController : Controller
             return RedirectToAction("Index", new { tab = "book" });
         }
 
+        // Ops run Monday–Saturday; the shop is closed on Sundays.
+        if (input.PreferredPickupDate.DayOfWeek == DayOfWeek.Sunday)
+        {
+            TempData["CustomerError"] = "Pickups are scheduled Monday to Saturday only — the shop is closed on Sundays. Please choose another date.";
+            return RedirectToAction("Index", new { tab = "book" });
+        }
+
         if (!input.AcceptTerms)
         {
             TempData["CustomerError"] = "You must agree to the Terms & Conditions to book.";
             return RedirectToAction("Index", new { tab = "book" });
+        }
+
+        // Validate optional exact map coordinates if provided by customer
+        if (input.PickupLatitude.HasValue || input.PickupLongitude.HasValue)
+        {
+            if (!input.PickupLatitude.HasValue || !input.PickupLongitude.HasValue ||
+                input.PickupLatitude.Value < -90m || input.PickupLatitude.Value > 90m ||
+                input.PickupLongitude.Value < -180m || input.PickupLongitude.Value > 180m)
+            {
+                TempData["CustomerError"] = "Invalid pickup map coordinates. Please select a valid point on the map.";
+                return RedirectToAction("Index", new { tab = "book" });
+            }
         }
 
         // Clean & format mobile number
@@ -175,6 +217,8 @@ public class CustomerController : Controller
                 PreferredPickupDate = input.PreferredPickupDate,
                 PreferredPickupTime = input.PreferredPickupTime,
                 PickupLocation = input.PickupLocation.Trim(),
+                PickupLatitude = input.PickupLatitude,
+                PickupLongitude = input.PickupLongitude,
                 ContactNumber = contact,
                 SpecialInstructions = input.SpecialInstructions?.Trim(),
                 Status = OrderStatus.Pending,
@@ -263,6 +307,7 @@ public class CustomerController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("action-policy")]
     public async Task<IActionResult> PayOrder(int id)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -295,7 +340,7 @@ public class CustomerController : Controller
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var successUrl = $"{baseUrl}/Customer/PaymentSuccess?orderId={order.Id}";
-        var cancelUrl = $"{baseUrl}/Customer?tab=payment";
+        var cancelUrl = $"{baseUrl}/Customer/PaymentCancelled?orderId={order.Id}";
 
         var checkout = await _payMongoService.CreateCheckoutSessionAsync(
             order.Id,
@@ -340,7 +385,7 @@ public class CustomerController : Controller
         }
 
         if (order.IsPaymentConfirmed)
-            return RedirectToAction("Index", new { tab = "tracking" });
+            return RedirectToAction(nameof(Receipt), new { id = order.Id });
 
         // Never trust the redirect URL alone: confirm with PayMongo that the
         // recorded checkout session was actually paid (and covers the amount
@@ -357,7 +402,14 @@ public class CustomerController : Controller
             return RedirectToAction("Index", new { tab = "payment" });
         }
 
-        LaundryHub2._0.Services.OrderPaymentConfirmation.ApplyConfirmedPayment(order, DateTime.UtcNow);
+        var applied = LaundryHub2._0.Services.OrderPaymentConfirmation.ApplyConfirmedPayment(order, DateTime.UtcNow);
+        if (!applied)
+        {
+            _logger.LogWarning("ApplyConfirmedPayment declined for order {OrderNumber} (status={Status}, isConfirmed={IsConfirmed})",
+                order.OrderNumber, order.Status, order.IsPaymentConfirmed);
+            TempData["CustomerError"] = "Payment could not be applied to this order at this time.";
+            return RedirectToAction("Index", new { tab = "payment" });
+        }
         LaundryHub2._0.Services.AuditTrail.Record(_context, user.FullName, LaundryHub2._0.Services.AuditTrail.Payment, user.FullName, "Customer", $"Order {order.OrderNumber} paid {amountDue:N2} via redirect verify.");
         if (order.Status == OrderStatus.ReadyForDelivery)
             await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.ReadyForDelivery, $"Order {order.OrderNumber} ready for delivery", "Your laundry is ready and will be dispatched for delivery.");
@@ -374,14 +426,78 @@ public class CustomerController : Controller
             if (fresh != null && fresh.IsPaymentConfirmed)
             {
                 TempData["CustomerSuccess"] = $"🎉 Payment verified successfully for order #{order.OrderNumber}! Your laundry is ready for delivery dispatch.";
-                return RedirectToAction("Index", new { tab = "tracking" });
+                return RedirectToAction(nameof(Receipt), new { id = order.Id });
             }
             TempData["CustomerError"] = "Another update conflicted with this payment. Please check your order status and try again.";
             return RedirectToAction("Index", new { tab = "payment" });
         }
         TempData["CustomerSuccess"] = $"🎉 Payment verified successfully for order #{order.OrderNumber}! Your laundry is ready for delivery dispatch.";
 
-        return RedirectToAction("Index", new { tab = "tracking" });
+        return RedirectToAction(nameof(Receipt), new { id = order.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PaymentCancelled(int orderId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction("Login", "Account");
+
+        var order = await _context.LaundryOrders
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.CustomerId == user.Id);
+
+        if (order == null)
+        {
+            TempData["CustomerError"] = "Order not found.";
+            return RedirectToAction("Index", new { tab = "payment" });
+        }
+
+        // Paid in the meantime (e.g. webhook won the race): show the receipt.
+        if (order.IsPaymentConfirmed)
+            return RedirectToAction(nameof(Receipt), new { id = order.Id });
+
+        // Cancel path: nothing is marked paid here. The order stays exactly as
+        // it was (AwaitingPayment) and the customer can retry payment.
+        TempData["CustomerError"] = $"Payment for order {order.OrderNumber} was cancelled — no charge was made and the order is not marked as paid. You can retry payment anytime.";
+        return RedirectToAction("Index", new { tab = "payment" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Receipt(int id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction("Login", "Account");
+
+        var order = await _context.LaundryOrders
+            .Include(o => o.OrderServices)
+                .ThenInclude(os => os.Service)
+            .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == user.Id);
+
+        if (order == null)
+        {
+            TempData["CustomerError"] = "Order not found.";
+            return RedirectToAction("Index", new { tab = "payment" });
+        }
+
+        // Receipts exist only for verified payments — never for unpaid orders.
+        if (!order.IsPaymentConfirmed)
+        {
+            TempData["CustomerError"] = $"Order {order.OrderNumber} is not paid yet, so no receipt is available.";
+            return RedirectToAction("Index", new { tab = "payment" });
+        }
+
+        var baseAmount = order.TotalAmount ?? 0m;
+        var penalty = order.AccruedPenaltyAmount ?? 0m;
+        var discount = await _loyaltyService.GetRedeemedDiscountAsync(order.Id, baseAmount);
+
+        return View(new PaymentReceiptViewModel
+        {
+            Order = order,
+            CustomerName = user.FullName,
+            BaseAmount = baseAmount,
+            PenaltyAmount = penalty,
+            LoyaltyDiscount = discount,
+            NetPaid = Math.Max(0m, baseAmount + penalty - discount)
+        });
     }
 
     [HttpPost]
@@ -433,13 +549,24 @@ public class CustomerController : Controller
             return RedirectToAction("Index", new { tab = "tracking" });
         }
 
-        order.WeightConfirmedByCustomerAt = DateTime.UtcNow;
-        order.UpdatedAt = DateTime.UtcNow;
+        var nowWC = DateTime.UtcNow;
+        order.WeightConfirmedByCustomerAt = nowWC;
+        order.Status = OrderStatus.AwaitingPayment;
+        order.UpdatedAt = nowWC;
+
+        // Set immutable payment timeline anchors (only on first entry into AwaitingPayment).
+        if (!order.AwaitingPaymentAt.HasValue)
+        {
+            order.AwaitingPaymentAt = nowWC;
+            order.PaymentDeadlineAt = nowWC.AddHours(24);
+            order.GracePeriodEndAt = nowWC.AddHours(24 + 72); // 24h deadline + 72h grace
+        }
+
         LaundryHub2._0.Services.AuditTrail.Record(_context, user.FullName, LaundryHub2._0.Services.AuditTrail.Update, user.FullName, "Customer", $"Order {order.OrderNumber} weight confirmed by customer ({order.WeightKg} kg).");
         await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.WeightConfirmed, $"Order {order.OrderNumber} weighed", $"You confirmed the verified weight of {order.WeightKg} kg.");
         await _context.SaveChangesAsync();
 
-        TempData["CustomerSuccess"] = $"Weight confirmed for order {order.OrderNumber}. Washing can now begin.";
+        TempData["CustomerSuccess"] = $"Weight confirmed for order {order.OrderNumber}. Payment can now be completed.";
         return RedirectToAction("Index", new { tab = "tracking" });
     }
 
@@ -521,4 +648,149 @@ public class CustomerController : Controller
         TempData["CustomerSuccess"] = $"Redeemed {input.Points} points (₱{discount:N2} off order {order.OrderNumber}).";
         return RedirectToAction("Index", new { tab = "payment" });
     }
+
+    // POST /Customer/FileClaim — customer self-report of damage/loss on one of
+    // their own DELIVERED orders. Owner-scoped, antiforgery, JSON.
+    // Abuse controls (all server-enforced, nothing persisted on rejection):
+    // the order must belong to the caller, must be Delivered, and each
+    // customer is capped at 3 open claims (explicit rejection beyond).
+    // Staff resolve path (Admin/ResolveClaim) is untouched.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> FileClaim(int orderId, string? type, string? description)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return Json(new { success = false, message = "Please log in again." });
+
+        if (type != LaundryHub2._0.Models.ClaimType.Damage && type != LaundryHub2._0.Models.ClaimType.Loss && type != LaundryHub2._0.Models.ClaimType.Other)
+            return Json(new { success = false, message = "Claim type must be Damage, Loss, or Other." });
+
+        var text = (description ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(text))
+            return Json(new { success = false, message = "Description is required." });
+        if (text.Length > 1000)
+            return Json(new { success = false, message = "Description cannot exceed 1000 characters." });
+
+        var order = await _context.LaundryOrders
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.CustomerId == user.Id);
+        if (order == null)
+            return Json(new { success = false, message = "Order not found." });
+
+        if (order.Status != LaundryHub2._0.Models.OrderStatus.Delivered)
+            return Json(new { success = false, message = "Only delivered orders can be disputed." });
+
+        var openCount = await _context.Claims
+            .Where(c => c.Status == LaundryHub2._0.Models.ClaimStatus.Open && c.Order != null && c.Order.CustomerId == user.Id)
+            .CountAsync();
+        if (openCount >= 3)
+            return Json(new { success = false, message = "You already have 3 open claims. Please wait until one is resolved before filing another." });
+
+        _context.Claims.Add(new LaundryHub2._0.Models.Claim
+        {
+            OrderId = order.Id,
+            ReporterName = user.FullName,
+            ReporterIsStaff = false,
+            Type = type,
+            Description = text,
+            Status = LaundryHub2._0.Models.ClaimStatus.Open,
+            CreatedAt = DateTime.UtcNow
+        });
+        LaundryHub2._0.Services.AuditTrail.Record(_context, user.FullName, LaundryHub2._0.Services.AuditTrail.Claim, order.OrderNumber, "Order", $"{type} claim self-filed by customer on order {order.OrderNumber}.");
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, message = $"{type} claim filed on order {order.OrderNumber}. Our team will review it shortly." });
+    }
+
+    /// <summary>
+    /// Phase 2E: Secure endpoint for customers to retrieve the latest location of their assigned active rider.
+    /// Strictly verifies customer ownership and active tracking window.
+    /// Returns only minimal location fields (latitude, longitude, updatedAt, isStale, trackingType).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetRiderLocation(int orderId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return Unauthorized(new { success = false, message = "Authentication required." });
+
+        var order = await _context.LaundryOrders
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.CustomerId == user.Id);
+
+        if (order == null)
+            return NotFound(new { success = false, message = "Order not found or access denied." });
+
+        // Determine tracking eligibility and which rider is active
+        // Pickup tracking: RiderAssigned, PickedUp, InTransitToShop (ends at Weighing)
+        // Delivery tracking: ReadyForDelivery, OutForDelivery, DeliveryAttemptFailed (ends at Delivered)
+        string? activeRiderId = null;
+        string trackingType = "none";
+
+        if (order.Status == OrderStatus.RiderAssigned ||
+            order.Status == OrderStatus.PickedUp ||
+            order.Status == OrderStatus.InTransitToShop)
+        {
+            trackingType = "pickup";
+            activeRiderId = order.PickupRiderId;
+        }
+        else if (order.Status == OrderStatus.ReadyForDelivery ||
+                 order.Status == OrderStatus.OutForDelivery ||
+                 order.Status == OrderStatus.DeliveryAttemptFailed)
+        {
+            trackingType = "delivery";
+            activeRiderId = order.DeliveryRiderId;
+        }
+
+        if (string.IsNullOrEmpty(activeRiderId) || trackingType == "none")
+        {
+            return Ok(new
+            {
+                success = false,
+                isTrackingActive = false,
+                trackingType = "none",
+                message = "Live tracking is not active for this order."
+            });
+        }
+
+        var rider = await _context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == activeRiderId)
+            .Select(u => new
+            {
+                u.CurrentLatitude,
+                u.CurrentLongitude,
+                u.LastLocationUpdatedAt
+            })
+            .FirstOrDefaultAsync();
+
+        if (rider == null || !rider.CurrentLatitude.HasValue || !rider.CurrentLongitude.HasValue)
+        {
+            return Ok(new
+            {
+                success = true,
+                isTrackingActive = true,
+                trackingType,
+                hasLocation = false,
+                message = "Waiting for rider location..."
+            });
+        }
+
+        var isStale = rider.LastLocationUpdatedAt == null || (DateTime.UtcNow - rider.LastLocationUpdatedAt.Value).TotalMinutes > 2;
+
+        return Ok(new
+        {
+            success = true,
+            isTrackingActive = true,
+            trackingType,
+            hasLocation = true,
+            latitude = rider.CurrentLatitude.Value,
+            longitude = rider.CurrentLongitude.Value,
+            updatedAt = rider.LastLocationUpdatedAt.HasValue
+                ? DateTime.SpecifyKind(rider.LastLocationUpdatedAt.Value, DateTimeKind.Utc).ToString("o")
+                : null,
+            isStale
+        });
+    }
 }
+

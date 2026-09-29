@@ -17,8 +17,9 @@ public class AdminController : Controller
     private readonly LaundryHub2._0.Services.OrderNumberService _orderNumberService;
     private readonly LaundryHub2._0.Services.LoyaltyService _loyaltyService;
     private readonly LaundryHub2._0.Services.PayMongoService _payMongoService;
+    private readonly LaundryHub2._0.Services.PaymentDeadlineBackfillService _backfillService;
 
-    public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env, LaundryHub2._0.Services.NotificationService notificationService, LaundryHub2._0.Services.OrderNumberService orderNumberService, LaundryHub2._0.Services.LoyaltyService loyaltyService, LaundryHub2._0.Services.PayMongoService payMongoService)
+    public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env, LaundryHub2._0.Services.NotificationService notificationService, LaundryHub2._0.Services.OrderNumberService orderNumberService, LaundryHub2._0.Services.LoyaltyService loyaltyService, LaundryHub2._0.Services.PayMongoService payMongoService, LaundryHub2._0.Services.PaymentDeadlineBackfillService backfillService)
     {
         _context = context;
         _userManager = userManager;
@@ -27,6 +28,7 @@ public class AdminController : Controller
         _orderNumberService = orderNumberService;
         _loyaltyService = loyaltyService;
         _payMongoService = payMongoService;
+        _backfillService = backfillService;
     }
 
     [HttpGet]
@@ -131,11 +133,17 @@ public class AdminController : Controller
             .OrderBy(s => s.Id)
             .ToListAsync();
 
+        var supervisors = adminUsers.Concat(managerUsers)
+            .Where(u => !u.IsSuspended && !u.IsArchived)
+            .OrderBy(u => u.FullName)
+            .ToList();
+
         var model = new AdminDashboardViewModel
         {
             CurrentUser = currentUser ?? new ApplicationUser { FullName = "Administrator" },
             Orders = orders,
             AvailableRiders = activeRiders,
+            AvailableSupervisors = supervisors,
             TotalCustomersCount = allCustomers.Count,
             TotalEmployeesCount = adminUsers.Count + managerUsers.Count + staffUsers.Count + riderCount,
             Employees = employees,
@@ -216,6 +224,7 @@ public class AdminController : Controller
         order.Status = OrderStatus.RiderAssigned;
         order.UpdatedAt = DateTime.UtcNow;
 
+        await _notificationService.NotifyAsync(rider.Id, order.Id, LaundryHub2._0.Services.NotificationService.RiderAssigned, $"New pickup job {order.OrderNumber}", $"Pickup job {order.OrderNumber}: collect from {order.Customer?.FullName ?? "customer"} — contact {order.ContactNumber}. Pick up and bring to the shop.");
         LaundryHub2._0.Services.AuditTrail.Record(_context, pickupAssignAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Assign, rider.FullName, "Rider", $"Order {order.OrderNumber} pickup leg ({previousPickupRider?.FullName ?? "Unassigned"} → {rider.FullName}).");
         await _context.SaveChangesAsync();
 
@@ -266,22 +275,32 @@ public class AdminController : Controller
         // Save scale photo if provided
         if (photo != null && photo.Length > 0)
         {
-            var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
-            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            if (allowed.Contains(ext))
+            var validation = await LaundryHub2._0.Services.ImageUploadValidator.ValidateImageAsync(photo);
+            if (!validation.IsValid)
             {
-                var dir = Path.Combine(_env.WebRootPath, "uploads", "orders", id.ToString());
-                Directory.CreateDirectory(dir);
-                var fileName = $"weight{ext}";
-                var filePath = Path.Combine(dir, fileName);
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await photo.CopyToAsync(stream);
-                order.WeightPhotoPath = $"/uploads/orders/{id}/{fileName}";
+                TempData["ErrorMessage"] = validation.ErrorMessage ?? "Please upload a valid scale photo.";
+                return RedirectToAction(nameof(Index), new { tab = "orders" });
             }
+
+            var safeExtension = validation.ValidatedExtension ?? ".jpg";
+            var dir = Path.Combine(_env.WebRootPath, "uploads", "orders", id.ToString());
+            Directory.CreateDirectory(dir);
+
+            // Safe cryptographically random unique server-side filename
+            var fileName = $"scale_{Guid.NewGuid():N}{safeExtension}";
+            var filePath = Path.Combine(dir, fileName);
+
+            await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                await photo.CopyToAsync(stream);
+            }
+
+            order.WeightPhotoPath = $"/uploads/orders/{id}/{fileName}";
         }
 
         order.WeightKg = Math.Round(weightKg, 2);
         order.WeightConfirmedAt = DateTime.UtcNow;
+        order.WeightConfirmationDeadline = order.WeightConfirmedAt.Value.AddHours(12);
         order.UpdatedAt = DateTime.UtcNow;
 
         order.TotalAmount = Math.Round(order.WeightKg.Value * rateSum, 2);
@@ -298,6 +317,201 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index), new { tab = "orders" });
     }
 
+    // POST /Admin/ExtendWeightConfirmationDeadline
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExtendWeightConfirmationDeadline(ExtendWeightConfirmationDeadlineInputModel input)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Invalid deadline extension input.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var order = await _context.LaundryOrders.Include(o => o.Customer).FirstOrDefaultAsync(o => o.Id == input.OrderId);
+        if (order == null)
+        {
+            TempData["ErrorMessage"] = "Order not found.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (order.Status != OrderStatus.WeightConfirmed)
+        {
+            TempData["ErrorMessage"] = "Order is not in WeightConfirmed status.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (order.WeightConfirmedByCustomerAt.HasValue)
+        {
+            TempData["ErrorMessage"] = "Customer has already confirmed the weight.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var currentDeadline = order.WeightConfirmationExtensionDeadline ?? order.WeightConfirmationDeadline ?? order.WeightConfirmedAt ?? DateTime.UtcNow;
+        if (input.NewDeadline <= currentDeadline)
+        {
+            TempData["ErrorMessage"] = "New extension deadline must be later than the current deadline.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        order.WeightConfirmationExtensionDeadline = input.NewDeadline;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        var staff = await _userManager.GetUserAsync(User);
+        LaundryHub2._0.Services.AuditTrail.Record(_context, staff?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} weight confirmation deadline extended to {input.NewDeadline:yyyy-MM-dd HH:mm UTC}.");
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Deadline extended successfully for order #{order.OrderNumber}.";
+        return RedirectToAction(nameof(Index), new { tab = "orders" });
+    }
+
+    // POST /Admin/RecordContactAttempt
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RecordContactAttempt(RecordContactAttemptInputModel input)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Invalid contact attempt input.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var order = await _context.LaundryOrders.Include(o => o.Customer).FirstOrDefaultAsync(o => o.Id == input.OrderId);
+        if (order == null)
+        {
+            TempData["ErrorMessage"] = "Order not found.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (order.Status != OrderStatus.WeightConfirmed)
+        {
+            TempData["ErrorMessage"] = "Order is not in WeightConfirmed status.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var staff = await _userManager.GetUserAsync(User);
+        LaundryHub2._0.Services.AuditTrail.Record(_context, staff?.FullName ?? "Unknown", "ContactAttempt", order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} contact attempt via {input.ContactMethod}: {input.Outcome}");
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Contact attempt recorded for order #{order.OrderNumber}.";
+        return RedirectToAction(nameof(Index), new { tab = "orders" });
+    }
+
+    // POST /Admin/PerformWeightOverride
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PerformWeightOverride(WeightOverrideInputModel input)
+    {
+        if (!ModelState.IsValid)
+        {
+            var err = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage ?? "Invalid override input.";
+            TempData["ErrorMessage"] = err;
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var order = await _context.LaundryOrders
+            .Include(o => o.Customer)
+            .Include(o => o.OrderServices)
+            .FirstOrDefaultAsync(o => o.Id == input.OrderId);
+
+        if (order == null)
+        {
+            TempData["ErrorMessage"] = "Order not found.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (order.Status != OrderStatus.WeightConfirmed)
+        {
+            TempData["ErrorMessage"] = "Order is not in WeightConfirmed status.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (order.WeightConfirmedByCustomerAt.HasValue)
+        {
+            TempData["ErrorMessage"] = "Customer has already confirmed weight.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var now = DateTime.UtcNow;
+        if (!order.WeightConfirmationDeadline.HasValue || now <= order.WeightConfirmationDeadline.Value)
+        {
+            TempData["ErrorMessage"] = "Initial 12-hour weight confirmation deadline has not passed.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (!order.WeightConfirmationExtensionDeadline.HasValue || now <= order.WeightConfirmationExtensionDeadline.Value)
+        {
+            TempData["ErrorMessage"] = "Weight confirmation extension deadline has not passed or was not set.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        // Check for documented contact attempts in audit logs
+        var hasContactAttempt = await _context.AuditLogs.AnyAsync(a => a.Action == "ContactAttempt" && a.Notes != null && a.Notes.Contains(order.OrderNumber));
+        if (!hasContactAttempt)
+        {
+            TempData["ErrorMessage"] = "At least one documented customer contact attempt is required before override.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        // Verify supervisor approval (Admin or Manager)
+        var supervisor = await _userManager.FindByIdAsync(input.SupervisorId);
+        if (supervisor == null || supervisor.IsSuspended || supervisor.IsArchived)
+        {
+            TempData["ErrorMessage"] = "Selected supervisor is invalid or inactive.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var isSupervisorRole = await _userManager.IsInRoleAsync(supervisor, "Admin") || await _userManager.IsInRoleAsync(supervisor, "Manager");
+        if (!isSupervisorRole)
+        {
+            TempData["ErrorMessage"] = "Selected user does not have supervisor (Admin/Manager) authorization.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var staff = await _userManager.GetUserAsync(User);
+        if (staff == null)
+        {
+            TempData["ErrorMessage"] = "Staff user not found.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        var rateSum = order.OrderServices.Sum(os => os.PricePerKgSnapshot);
+        if (rateSum <= 0)
+        {
+            TempData["ErrorMessage"] = "Order has no valid service rates recorded.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        order.WeightKg = Math.Round(input.EstimatedWeight, 2);
+        order.TotalAmount = Math.Round(order.WeightKg.Value * rateSum, 2);
+        order.WeightOverrideByStaffId = staff.Id;
+        order.WeightOverrideSupervisorId = supervisor.Id;
+        order.WeightOverrideApprovedAt = now;
+        order.WeightOverrideAt = now;
+        order.EstimatedWeightMethod = input.EstimatedWeightMethod;
+        order.WeightOverrideReason = input.WeightOverrideReason;
+        order.Status = OrderStatus.AwaitingPayment;
+        order.UpdatedAt = now;
+
+        // Set immutable payment timeline anchors (only on first entry into AwaitingPayment).
+        if (!order.AwaitingPaymentAt.HasValue)
+        {
+            order.AwaitingPaymentAt = now;
+            order.PaymentDeadlineAt = now.AddHours(24);
+            order.GracePeriodEndAt = now.AddHours(24 + 72); // 24h deadline + 72h grace
+        }
+
+
+        LaundryHub2._0.Services.AuditTrail.Record(_context, staff.FullName, "WeightOverride", order.Customer?.FullName ?? "Unknown", "Customer", 
+            $"Order {order.OrderNumber} estimated-weight override: {order.WeightKg} kg (₱{order.TotalAmount}) by staff {staff.FullName}, approved by supervisor {supervisor.FullName}. Method: {input.EstimatedWeightMethod}. Reason: {input.WeightOverrideReason}");
+
+        await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.WeightConfirmRequest, $"Order {order.OrderNumber} weight finalized", $"The shop finalized your weight at {order.WeightKg} kg (₱{order.TotalAmount:N2}). Payment is now due.");
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Weight override applied for order #{order.OrderNumber}: {order.WeightKg} kg. Moved to Awaiting Payment.";
+        return RedirectToAction(nameof(Index), new { tab = "orders" });
+    }
+
     // POST /Admin/StartWashing/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -308,9 +522,15 @@ public class AdminController : Controller
             .Include(o => o.OrderServices)
                 .ThenInclude(os => os.Service)
             .FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null || order.Status != OrderStatus.WeightConfirmed)
+        if (order == null || order.Status != OrderStatus.PaymentConfirmed || !order.IsPaymentConfirmed)
         {
-            TempData["ErrorMessage"] = "Order is not ready for washing.";
+            if (order != null)
+            {
+                var blockedAdmin = await _userManager.GetUserAsync(User);
+                LaundryHub2._0.Services.AuditTrail.Record(_context, blockedAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} StartWashing blocked: payment not confirmed (status={order.Status}, paid={order.IsPaymentConfirmed}).");
+                await _context.SaveChangesAsync();
+            }
+            TempData["ErrorMessage"] = "Order is not ready for washing. Payment must be confirmed first.";
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
@@ -320,25 +540,11 @@ public class AdminController : Controller
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
-        const int WeightAutoConfirmHours = 12;
-        var customerConfirmed = order.WeightConfirmedByCustomerAt.HasValue;
-        var weightAgeHours = order.WeightConfirmedAt.HasValue
-            ? (DateTime.UtcNow - order.WeightConfirmedAt.Value).TotalHours
-            : 0;
-        if (!customerConfirmed && weightAgeHours < WeightAutoConfirmHours)
-        {
-            TempData["ErrorMessage"] = "Customer weight confirmation is required before washing.";
-            return RedirectToAction(nameof(Index), new { tab = "orders" });
-        }
-
         order.Status = OrderStatus.Washing;
         order.WashingStartedAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
         var washAdmin = await _userManager.GetUserAsync(User);
-        var confirmPath = customerConfirmed
-            ? "customer confirmed"
-            : $"auto-confirmed after {(int)weightAgeHours}h";
-        LaundryHub2._0.Services.AuditTrail.Record(_context, washAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} moved to Washing ({order.WeightKg} kg, {confirmPath}).");
+        LaundryHub2._0.Services.AuditTrail.Record(_context, washAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} moved to Washing ({order.WeightKg} kg).");
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Order #{order.OrderNumber} marked as Washing.";
@@ -355,9 +561,15 @@ public class AdminController : Controller
             .Include(o => o.OrderServices)
                 .ThenInclude(os => os.Service)
             .FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null || order.Status != OrderStatus.Washing)
+        if (order == null || order.Status != OrderStatus.Washing || !order.IsPaymentConfirmed)
         {
-            TempData["ErrorMessage"] = "Order is not currently in the washing stage.";
+            if (order != null)
+            {
+                var blockedAdmin = await _userManager.GetUserAsync(User);
+                LaundryHub2._0.Services.AuditTrail.Record(_context, blockedAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} MarkDrying blocked: payment not confirmed or not in washing stage (status={order.Status}, paid={order.IsPaymentConfirmed}).");
+                await _context.SaveChangesAsync();
+            }
+            TempData["ErrorMessage"] = "Order is not currently in the washing stage. Payment must be confirmed first.";
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
@@ -378,6 +590,53 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index), new { tab = "orders" });
     }
 
+    // POST /Admin/StartDrying/{id}
+    // Dry-only path: PaymentConfirmed -> Drying for orders that require drying
+    // but do not require washing. Payment gate strictly enforced.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> StartDrying(int id)
+    {
+        var order = await _context.LaundryOrders
+            .Include(o => o.Customer)
+            .Include(o => o.OrderServices)
+                .ThenInclude(os => os.Service)
+            .FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null || order.Status != OrderStatus.PaymentConfirmed || !order.IsPaymentConfirmed)
+        {
+            if (order != null)
+            {
+                var blockedAdmin = await _userManager.GetUserAsync(User);
+                LaundryHub2._0.Services.AuditTrail.Record(_context, blockedAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} StartDrying blocked: payment not confirmed (status={order.Status}, paid={order.IsPaymentConfirmed}).");
+                await _context.SaveChangesAsync();
+            }
+            TempData["ErrorMessage"] = "Order is not ready for drying. Payment must be confirmed first.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (!LaundryHub2._0.Services.OrderStageRequirements.RequiresDrying(order))
+        {
+            TempData["ErrorMessage"] = "No service on this order requires drying.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        if (LaundryHub2._0.Services.OrderStageRequirements.RequiresWashing(order))
+        {
+            TempData["ErrorMessage"] = "This order requires washing first. Use Start Washing.";
+            return RedirectToAction(nameof(Index), new { tab = "orders" });
+        }
+
+        order.Status = OrderStatus.Drying;
+        order.DryingStartedAt = DateTime.UtcNow;
+        order.UpdatedAt = DateTime.UtcNow;
+        var dryAdmin = await _userManager.GetUserAsync(User);
+        LaundryHub2._0.Services.AuditTrail.Record(_context, dryAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} moved to Drying directly (dry-only, {order.WeightKg} kg).");
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Order #{order.OrderNumber} marked as Drying.";
+        return RedirectToAction(nameof(Index), new { tab = "orders" });
+    }
+
     // POST /Admin/ProcessingComplete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -392,23 +651,29 @@ public class AdminController : Controller
         var needsWashing = order != null && LaundryHub2._0.Services.OrderStageRequirements.RequiresWashing(order);
         var stagesDone = order != null && (needsDrying ? order.Status == OrderStatus.Drying
             : needsWashing ? order.Status == OrderStatus.Washing
-            : order.Status == OrderStatus.WeightConfirmed);
-        if (order == null || !stagesDone)
+            : order.Status == OrderStatus.PaymentConfirmed);
+        if (order == null || !stagesDone || !order.IsPaymentConfirmed)
         {
-            TempData["ErrorMessage"] = "Order has not finished all required processing stages.";
+            if (order != null)
+            {
+                var blockedAdmin = await _userManager.GetUserAsync(User);
+                LaundryHub2._0.Services.AuditTrail.Record(_context, blockedAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} ProcessingComplete blocked: payment not confirmed or stages incomplete (status={order.Status}, paid={order.IsPaymentConfirmed}).");
+                await _context.SaveChangesAsync();
+            }
+            TempData["ErrorMessage"] = "Order has not finished all required processing stages. Payment must be confirmed first.";
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
-        order.Status = OrderStatus.AwaitingPayment;
+        order.Status = OrderStatus.ReadyForDelivery;
         order.ProcessingCompletedAt = DateTime.UtcNow;
         order.ReadyForDeliveryNotifiedAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
         var completeAdmin = await _userManager.GetUserAsync(User);
         await DeductProductionConsumptionAsync(order, completeAdmin?.Id);
-        LaundryHub2._0.Services.AuditTrail.Record(_context, completeAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} processing complete ({order.WeightKg} kg, {order.TotalAmount}) — awaiting payment.");
+        LaundryHub2._0.Services.AuditTrail.Record(_context, completeAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} processing complete ({order.WeightKg} kg, {order.TotalAmount}) — ready for delivery.");
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Order #{order.OrderNumber} processing complete! Now Awaiting Payment.";
+        TempData["SuccessMessage"] = $"Order #{order.OrderNumber} processing complete! Now ready for delivery.";
         return RedirectToAction(nameof(Index), new { tab = "orders" });
     }
 
@@ -468,15 +733,12 @@ public class AdminController : Controller
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
-        if (order.Status != OrderStatus.ReadyForDelivery && order.Status != OrderStatus.PaymentConfirmed && order.Status != OrderStatus.DeliveryAttemptFailed)
+        if ((order.Status != OrderStatus.ReadyForDelivery && order.Status != OrderStatus.DeliveryAttemptFailed) || !order.IsPaymentConfirmed)
         {
-            TempData["ErrorMessage"] = "Order is not ready for delivery assignment.";
-            return RedirectToAction(nameof(Index), new { tab = "orders" });
-        }
-
-        if (!order.IsPaymentConfirmed)
-        {
-            TempData["ErrorMessage"] = "Cannot dispatch delivery: Payment has not been confirmed yet.";
+            var blockedAdmin = await _userManager.GetUserAsync(User);
+            LaundryHub2._0.Services.AuditTrail.Record(_context, blockedAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Update, order.OrderNumber, "Order", $"Order {order.OrderNumber} AssignDeliveryRider blocked: payment not confirmed or not ready (status={order.Status}, paid={order.IsPaymentConfirmed}).");
+            await _context.SaveChangesAsync();
+            TempData["ErrorMessage"] = "Order is not ready for delivery assignment. Payment must be confirmed first.";
             return RedirectToAction(nameof(Index), new { tab = "orders" });
         }
 
@@ -505,6 +767,7 @@ public class AdminController : Controller
         order.UpdatedAt = DateTime.UtcNow;
         LaundryHub2._0.Services.AuditTrail.Record(_context, deliveryAssignAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Assign, rider.FullName, "Rider", $"Order {order.OrderNumber} delivery leg ({previousDeliveryRider?.FullName ?? "Unassigned"} → {rider.FullName}).");
         await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.OutForDelivery, $"Order {order.OrderNumber} out for delivery", $"Your laundry is out for delivery with {rider.FullName}.");
+        await _notificationService.NotifyAsync(rider.Id, order.Id, LaundryHub2._0.Services.NotificationService.RiderAssigned, $"New delivery job {order.OrderNumber}", $"Delivery leg for order {order.OrderNumber} — customer contact {order.ContactNumber}. Deliver and capture proof photo.");
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Order #{order.OrderNumber} is Out for Delivery with rider {rider.FullName}!";
@@ -565,6 +828,8 @@ public class AdminController : Controller
             order.DeliveryAssignedAt = now;
         }
         order.UpdatedAt = now;
+        var leg = isPickupLeg ? "pickup" : "delivery";
+        await _notificationService.NotifyAsync(rider.Id, order.Id, LaundryHub2._0.Services.NotificationService.RiderAssigned, $"Reassigned {leg} job {order.OrderNumber}", $"{(isPickupLeg ? "Pickup" : "Delivery")} leg for order {order.OrderNumber} reassigned to you — customer contact {order.ContactNumber}.");
         LaundryHub2._0.Services.AuditTrail.Record(_context, reassignAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Reassign, rider.FullName, "Rider", $"Order {order.OrderNumber} {(isPickupLeg ? "pickup" : "delivery")} leg ({previousRider?.FullName ?? "Unassigned"} → {rider.FullName}).");
         await _context.SaveChangesAsync();
 
@@ -681,6 +946,80 @@ public class AdminController : Controller
         return Json(new { success = true, message = "Note added." });
     }
 
+    // POST /Admin/SendDormantPromo — Manager+ reactivation message blast to dormant
+    // customers. Message only: one Promo notification per customer plus one audit
+    // entry. All-or-nothing per request; one promo per customer per 7 days.
+    // Gate: Admin, Manager. Staff should not initiate customer marketing campaigns.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendDormantPromo(SendDormantPromoInputModel input)
+    {
+        if (!User.IsInRole("Admin") && !User.IsInRole("Manager"))
+            return StatusCode(403, new { success = false, message = "Access denied. Only Admins and Managers can send promotional messages." });
+
+        if (!ModelState.IsValid)
+        {
+            var error = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage ?? "Invalid input.";
+            return Json(new { success = false, message = error });
+        }
+
+        var title = input.Title.Trim();
+        var body = input.Body.Trim();
+        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(body))
+            return Json(new { success = false, message = "Title and body are required." });
+
+        var ids = (input.CustomerIds ?? new List<string>())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Distinct()
+            .ToList();
+        if (ids.Count == 0)
+            return Json(new { success = false, message = "Select at least one customer." });
+
+        // Validate every ID before writing anything — invalid ID aborts the whole request.
+        var customers = new List<ApplicationUser>();
+        foreach (var id in ids)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null || user.IsArchived)
+                return Json(new { success = false, message = $"Customer not found or archived: {id}. No promos sent." });
+            if (!await _userManager.IsInRoleAsync(user, "Customer"))
+                return Json(new { success = false, message = $"Not a customer account: {id}. No promos sent." });
+            customers.Add(user);
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-7);
+        var recent = await _context.Notifications
+            .Where(n => n.Type == LaundryHub2._0.Services.NotificationService.Promo
+                && ids.Contains(n.RecipientUserId)
+                && n.CreatedAt >= cutoff)
+            .Select(n => n.RecipientUserId)
+            .Distinct()
+            .ToListAsync();
+        if (recent.Count > 0)
+            return Json(new { success = false, message = $"{recent.Count} customer(s) already received a promo in the last 7 days — no promos sent." });
+
+        var now = DateTime.UtcNow;
+        foreach (var customer in customers)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                RecipientUserId = customer.Id,
+                OrderId = null,
+                Type = LaundryHub2._0.Services.NotificationService.Promo,
+                Title = title,
+                Body = body,
+                IsRead = false,
+                CreatedAt = now
+            });
+        }
+        var author = await _userManager.GetUserAsync(User);
+        LaundryHub2._0.Services.AuditTrail.Record(_context, author?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Promo, $"{customers.Count} dormant customers", "Customer", $"Promo '{title}' sent to {customers.Count} dormant customer(s) by {author?.FullName ?? "Unknown"}.");
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, message = $"Promo sent to {customers.Count} customer(s)." });
+    }
+
     // POST /Admin/AdjustLoyaltyPoints — manual signed adjustment to a
     // customer's loyalty balance. No order linkage, no expiry.
     // Gate: LoyaltyAdjust (Admin only). Managers and Staff are forbidden.
@@ -794,7 +1133,7 @@ public class AdminController : Controller
         }
         var actingAdmin = await _userManager.GetUserAsync(User);
         LaundryHub2._0.Services.AuditTrail.Record(_context, actingAdmin?.FullName ?? "Unknown", LaundryHub2._0.Services.AuditTrail.Refund, order.Customer?.FullName ?? "Unknown", "Customer", returnedPoints > 0 ? $"Order {order.OrderNumber} refunded ₱{order.RefundAmount:N2}. Returned {returnedPoints} loyalty points." : $"Order {order.OrderNumber} refunded ₱{order.RefundAmount:N2}.");
-        await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.RefundIssued, $"Refund issued for order {order.OrderNumber}", $"A refund of ₱{order.RefundAmount:N2} was issued for your order.");
+        await _notificationService.NotifyAsync(order.CustomerId, order.Id, LaundryHub2._0.Services.NotificationService.RefundIssued, $"Refund issued for order {order.OrderNumber}", $"A refund of ₱{order.RefundAmount:N2} was issued to your original payment method." + (returnedPoints > 0 ? $" Returned {returnedPoints} loyalty points to your balance." : string.Empty));
         await _context.SaveChangesAsync();
 
         return Json(new { success = true, message = $"Order {order.OrderNumber} refunded ₱{order.RefundAmount:N2}.", refundId = refund.RefundId });
@@ -887,8 +1226,11 @@ public class AdminController : Controller
         return Json(new { success = true, message = $"Claim #{claim.Id} marked as {input.Status}." });
     }
 
+    // POST /Admin/AddInventoryItem — creates a new inventory catalog item.
+    // Gate: InventoryManagement (Admin, Manager). Staff may only adjust existing stock.
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "InventoryManagement")]
     public async Task<IActionResult> AddInventoryItem(InventoryItemInputModel input)
     {
         if (!ModelState.IsValid)
@@ -939,8 +1281,10 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index), new { tab = "inventory" });
     }
 
+    // Gate: InventoryManagement (Admin, Manager).
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "InventoryManagement")]
     public async Task<IActionResult> EditInventoryItem(int id, InventoryItemInputModel input)
     {
         if (!ModelState.IsValid)
@@ -982,8 +1326,10 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index), new { tab = "inventory" });
     }
 
+    // Gate: InventoryManagement (Admin, Manager).
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "InventoryManagement")]
     public async Task<IActionResult> SetInventoryItemArchived(int id, bool isArchived)
     {
         var item = await _context.InventoryItems.FindAsync(id);
@@ -1001,8 +1347,10 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index), new { tab = "inventory" });
     }
 
+    // Gate: InventoryManagement (Admin, Manager).
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "InventoryManagement")]
     public async Task<IActionResult> DeleteInventoryItem(int id)
     {
         var item = await _context.InventoryItems.FindAsync(id);
@@ -1355,4 +1703,112 @@ public class AdminController : Controller
 
         return Json(new { success = true, message = input.IsArchived ? $"{target.FullName} has been archived." : $"{target.FullName} has been restored." });
     }
+
+    // POST /Admin/RunPaymentDeadlineBackfill
+    // One-time explicit maintenance action: backfills missing AwaitingPaymentAt/PaymentDeadlineAt/GracePeriodEndAt
+    // on orders currently in AwaitingPayment without changing existing rules or payment state.
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RunPaymentDeadlineBackfill()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        var executedBy = currentUser?.FullName ?? "Administrator";
+
+        var result = await _backfillService.ExecuteBackfillAsync(executedBy);
+
+        return Json(new
+        {
+            success = true,
+            totalInspected = result.TotalAwaitingPaymentInspected,
+            alreadySetCount = result.AlreadySetCount,
+            backfilledCount = result.SuccessfullyBackfilledCount,
+            skippedCount = result.SkippedCount,
+            details = result.Details,
+            excludedOrders = result.ExcludedOrdersReport
+        });
+    }
+
+    /// <summary>
+    /// Phase 2F: Returns currently active rider GPS dispatch locations for active tracking orders.
+    /// Strictly restricted to Admin and Manager roles. Staff cannot access.
+    /// Pickup active states: RiderAssigned, PickedUp, InTransitToShop.
+    /// Delivery active states: ReadyForDelivery, OutForDelivery, DeliveryAttemptFailed.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> GetActiveRiderLocations()
+    {
+        // 1. Fetch active orders with their assigned riders
+        var activeOrders = await _context.LaundryOrders
+            .AsNoTracking()
+            .Include(o => o.PickupRider)
+            .Include(o => o.DeliveryRider)
+            .Where(o =>
+                (o.PickupRiderId != null &&
+                 (o.Status == OrderStatus.RiderAssigned ||
+                  o.Status == OrderStatus.PickedUp ||
+                  o.Status == OrderStatus.InTransitToShop))
+                ||
+                (o.DeliveryRiderId != null &&
+                 (o.Status == OrderStatus.ReadyForDelivery ||
+                  o.Status == OrderStatus.OutForDelivery ||
+                  o.Status == OrderStatus.DeliveryAttemptFailed)))
+            .ToListAsync();
+
+        var dispatchList = new List<ActiveRiderLocationDto>();
+
+        foreach (var order in activeOrders)
+        {
+            string? riderId = null;
+            string? riderName = null;
+            decimal? riderLat = null;
+            decimal? riderLng = null;
+            DateTime? riderUpdated = null;
+            string trackingType = "none";
+
+            if (order.Status == OrderStatus.RiderAssigned ||
+                order.Status == OrderStatus.PickedUp ||
+                order.Status == OrderStatus.InTransitToShop)
+            {
+                trackingType = "pickup";
+                riderId = order.PickupRiderId;
+                riderName = order.PickupRider?.FullName;
+                riderLat = order.PickupRider?.CurrentLatitude;
+                riderLng = order.PickupRider?.CurrentLongitude;
+                riderUpdated = order.PickupRider?.LastLocationUpdatedAt;
+            }
+            else if (order.Status == OrderStatus.ReadyForDelivery ||
+                     order.Status == OrderStatus.OutForDelivery ||
+                     order.Status == OrderStatus.DeliveryAttemptFailed)
+            {
+                trackingType = "delivery";
+                riderId = order.DeliveryRiderId;
+                riderName = order.DeliveryRider?.FullName;
+                riderLat = order.DeliveryRider?.CurrentLatitude;
+                riderLng = order.DeliveryRider?.CurrentLongitude;
+                riderUpdated = order.DeliveryRider?.LastLocationUpdatedAt;
+            }
+
+            if (string.IsNullOrEmpty(riderId)) continue;
+
+            dispatchList.Add(new ActiveRiderLocationDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                RiderId = riderId,
+                RiderName = riderName ?? "Rider",
+                Latitude = riderLat,
+                Longitude = riderLng,
+                UpdatedAt = riderUpdated,
+                TrackingType = trackingType,
+                Status = order.Status.ToString(),
+                OrderLatitude = order.PickupLatitude,
+                OrderLongitude = order.PickupLongitude
+            });
+        }
+
+        return Json(new { success = true, data = dispatchList });
+    }
 }
+

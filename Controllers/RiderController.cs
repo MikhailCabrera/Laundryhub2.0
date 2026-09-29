@@ -67,11 +67,34 @@ public class RiderController : Controller
         {
             Rider = user,
             ActiveJobs = myJobs,
-            JobHistory = history
+            JobHistory = history,
+            Notifications = await _context.Notifications
+                .Where(n => n.RecipientUserId == user.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(50)
+                .ToListAsync()
         };
 
         ViewData["ActiveTab"] = tab ?? "dashboard";
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkNotificationsRead(int? id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var query = _context.Notifications.Where(n => n.RecipientUserId == user.Id && !n.IsRead);
+        if (id.HasValue)
+            query = query.Where(n => n.Id == id.Value);
+        await query.ExecuteUpdateAsync(n => n.SetProperty(x => x.IsRead, true));
+
+        return RedirectToAction("Index", new { tab = "dashboard" });
     }
 
     // POST /Rider/MarkPickedUp/{id}

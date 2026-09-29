@@ -1,236 +1,3 @@
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\appsettings.Development.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\appsettings.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.exe
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.deps.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\LaundryHub2.0.pdb
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\rpswa.dswa.cache.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.GeneratedMSBuildEditorConfig.editorconfig
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.AssemblyInfoInputs.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.AssemblyInfo.cs
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.csproj.CoreCompileInputs.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.MvcApplicationPartsAssemblyInfo.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.RazorAssemblyInfo.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.RazorAssemblyInfo.cs
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\rjimswa.dswa.cache.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\scopedcss\bundle\LaundryHub2.0.styles.css
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\scopedcss\projectbundle\LaundryHub2.0.bundle.scp.css
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\m01ycy024c-{0}-61n19gt1b8-61n19gt1b8.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\q3ev9y0fno-{0}-bqjiyaj88i-bqjiyaj88i.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\xbqhzag2if-{0}-c2jlpeoesf-c2jlpeoesf.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\nfqsw5hu0c-{0}-erw9l3u2r3-erw9l3u2r3.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\ivrm5xe3j6-{0}-aexeepp0ev-aexeepp0ev.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\2npr7b9m2k-{0}-d7shbmvgxk-d7shbmvgxk.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\kormyw7yz3-{0}-ausgxo2sd3-ausgxo2sd3.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\idxsc3z244-{0}-k8d9w2qqmf-k8d9w2qqmf.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\f6658qdfh5-{0}-cosvhxvwiu-cosvhxvwiu.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\m0dfj903kf-{0}-ub07r2b239-ub07r2b239.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\3pa5u9sx4t-{0}-fvhpjtyr6v-fvhpjtyr6v.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\jdgs0efmj1-{0}-b7pk76d08c-b7pk76d08c.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\u050z6ocyd-{0}-fsbi9cje9m-fsbi9cje9m.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\atx3ftysa8-{0}-rzd6atqjts-rzd6atqjts.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\hpd83njcd0-{0}-ee0r1s7dh0-ee0r1s7dh0.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\2mdb0vl4n4-{0}-dxx9fxp4il-dxx9fxp4il.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\mbim2jrlb5-{0}-jd9uben2k1-jd9uben2k1.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\160fhhuy7l-{0}-khv3u5hwcm-khv3u5hwcm.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\vubkv10pj6-{0}-r4e9w2rdcm-r4e9w2rdcm.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\x64d5fusnv-{0}-lcd1t2u6c8-lcd1t2u6c8.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\8rapds7j1r-{0}-c2oey78nd0-c2oey78nd0.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\8lxwl5tf9k-{0}-tdbxkamptv-tdbxkamptv.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\rnvowdgd6b-{0}-j5mq2jizvt-j5mq2jizvt.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\ui5wy3tn9x-{0}-06098lyss8-06098lyss8.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\0186kxtbc6-{0}-nvvlpmu67g-nvvlpmu67g.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\lxh9mec8ni-{0}-s35ty4nyc5-s35ty4nyc5.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\4pfqi06iec-{0}-pj5nd1wqec-pj5nd1wqec.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\oo0x078r4v-{0}-46ein0sx1k-46ein0sx1k.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\lx8yw1zgev-{0}-v0zj4ognzu-v0zj4ognzu.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\856k0klznj-{0}-37tfw0ft22-37tfw0ft22.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\1tflmonbku-{0}-hrwsygsryq-hrwsygsryq.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\3qzr2m4zlb-{0}-pk9g2wxc8p-pk9g2wxc8p.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\dl0gec36ls-{0}-ft3s53vfgj-ft3s53vfgj.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\c9zudhktfi-{0}-6cfz1n2cew-6cfz1n2cew.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\cjb6rcuw5n-{0}-6pdc2jztkx-6pdc2jztkx.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\g7afkfxx4q-{0}-493y06b0oq-493y06b0oq.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\hm7rchskyk-{0}-iovd86k7lj-iovd86k7lj.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\rg4g09swzl-{0}-vr1egmr9el-vr1egmr9el.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\g2rbnms34k-{0}-kbrnm935zg-kbrnm935zg.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\mam095w25z-{0}-jj8uyg4cgr-jj8uyg4cgr.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\mm5tk7a3ik-{0}-y7v9cxd14o-y7v9cxd14o.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\miwpryhbqp-{0}-notf2xhcfb-notf2xhcfb.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\lfustyoubp-{0}-h1s4sie4z3-h1s4sie4z3.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\0h49ejhmmf-{0}-63fj8s7r0e-63fj8s7r0e.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\0c37736nfu-{0}-0j3bgjxly4-0j3bgjxly4.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\mtqd5nekow-{0}-47otxtyo56-47otxtyo56.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\be3vwsukbx-{0}-4v8eqarkd7-4v8eqarkd7.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\xaa9a0bh6p-{0}-356vix0kms-356vix0kms.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\pys2l2c2nc-{0}-83jwlth58m-83jwlth58m.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\rk8e4u7bkf-{0}-mrlpezrjn3-mrlpezrjn3.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\kn50diy5m7-{0}-lzl9nlhx6b-lzl9nlhx6b.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\mrq8off2sr-{0}-ag7o75518u-ag7o75518u.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\1o1wi8fvba-{0}-x0q3zqp4vz-x0q3zqp4vz.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\rurgl6qdp4-{0}-0i3buxo5is-0i3buxo5is.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\0uyevebfbt-{0}-o1o13a6vjx-o1o13a6vjx.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\n69cmhl86u-{0}-ttgo8qnofa-ttgo8qnofa.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\ue0o9qlw87-{0}-2z0ns9nrw6-2z0ns9nrw6.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\93cv7mio93-{0}-muycvpuwrr-muycvpuwrr.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\kwfi77tjhf-{0}-87fc7y1x7t-87fc7y1x7t.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\k1qicbn3j1-{0}-mlv21k5csn-mlv21k5csn.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\kia0gvov9f-{0}-xz6avq8irt-xz6avq8irt.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\rywl08mdii-{0}-xz6avq8irt-xz6avq8irt.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\staticwebassets.build.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\staticwebassets.build.json.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\staticwebassets.development.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\staticwebassets.build.endpoints.json
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\swae.build.ex.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.dll
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\refint\LaundryHub2.0.dll
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.pdb
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.genruntimeconfig.cache
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\ref\LaundryHub2.0.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Humanizer.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.Build.Framework.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.CSharp.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.Workspaces.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.ExternalAccess.RazorCompiler.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.Data.Sqlite.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Abstractions.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Design.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Relational.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Sqlite.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.Extensions.DependencyModel.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.VisualStudio.SolutionPersistence.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Mono.TextTemplating.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Newtonsoft.Json.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\SQLitePCLRaw.batteries_v2.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\SQLitePCLRaw.core.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\SQLitePCLRaw.provider.e_sqlite3.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.CodeDom.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Composition.AttributedModel.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Composition.Convention.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Composition.Hosting.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Composition.Runtime.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Composition.TypedParts.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\fr\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\it\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ja\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ko\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pl\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pt-BR\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\fr\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\it\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ja\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ko\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pl\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\it\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\browser-wasm\nativeassets\net9.0\e_sqlite3.a
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-arm\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-arm64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-armel\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-mips64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-musl-arm\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-musl-arm64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-musl-riscv64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-musl-s390x\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-musl-x64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-ppc64le\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-riscv64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-s390x\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-x64\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\linux-x86\native\libe_sqlite3.so
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\maccatalyst-arm64\native\libe_sqlite3.dylib
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\maccatalyst-x64\native\libe_sqlite3.dylib
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\osx-arm64\native\libe_sqlite3.dylib
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\osx-x64\native\libe_sqlite3.dylib
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-arm64\native\e_sqlite3.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\e_sqlite3.dll
-c:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x86\native\e_sqlite3.dll
-c:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryHub2.0.csproj.AssemblyReference.cache
-c:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\LaundryH.329ED457.Up2Date
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\ac4ubng6tm-{0}-du0qpstho7-du0qpstho7.gz
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\hzedlw7hv8-{0}-l6wwam0653-l6wwam0653.gz
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\BouncyCastle.Cryptography.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\Google.Protobuf.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\K4os.Compression.LZ4.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\K4os.Compression.LZ4.Streams.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\K4os.Hash.xxHash.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\MySql.Data.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\MySql.EntityFrameworkCore.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Configuration.ConfigurationManager.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Security.Cryptography.ProtectedData.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Security.Permissions.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\System.Windows.Extensions.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\ZstdSharp.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\comerr64.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\gssapi64.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\k5sprt64.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\krb5_64.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win-x64\native\krbcc64.dll
-C:\CODING PROJECTS\LaundryHub2.0\bin\Debug\net10.0\runtimes\win\lib\net10.0\System.Windows.Extensions.dll
-C:\CODING PROJECTS\LaundryHub2.0\obj\Debug\net10.0\compressed\e4de23133g-{0}-v8lt90qub4-v8lt90qub4.gz
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-iteration10\appsettings.Development.json
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-iteration10\appsettings.json
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-iteration10\LaundryHub2.0.staticwebassets.runtime.json
@@ -600,3 +367,186 @@ C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-live1\LaundryHub2.0.
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-live1\LaundryHub2.0.runtimeconfig.json
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-live1\LaundryHub2.0.dll
 C:\Users\mikha\AppData\Local\Temp\opencode\laundryhub-build-live1\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-buildcheck\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-build-out\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\promo-run\Debug\net10.0\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\textcheck-out\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run\Debug\net10.0\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\selfile-run2\Debug\net10.0\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\custbundle-out\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\bin\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\cust-run\Debug\net10.0\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\token-buildcheck\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\tokendedup-out\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\resp-out2\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\closeout-out\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\opencode.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\opencode.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check2\LaundryHub2.0.pdb
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\appsettings.Development.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\appsettings.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\opencode.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.staticwebassets.runtime.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.staticwebassets.endpoints.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.exe
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.deps.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.runtimeconfig.json
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.dll
+C:\Users\mikha\AppData\Local\Temp\opencode\lh-build-check3\LaundryHub2.0.pdb

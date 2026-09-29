@@ -10,4 +10,9 @@ public class ApplicationUser : IdentityUser
     public string? SuspendNote { get; set; }
     public bool IsArchived { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // ── Rider Location Tracking (Phase 2A) ───────────────────────────────────
+    public decimal? CurrentLatitude { get; set; }
+    public decimal? CurrentLongitude { get; set; }
+    public DateTime? LastLocationUpdatedAt { get; set; }
 }

@@ -12,8 +12,9 @@ public static class DbInitializer
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var context    = serviceProvider.GetRequiredService<ApplicationDbContext>();
-        var logger     = serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("LaundryHub2.0.Data.DbInitializer");
+        var context       = serviceProvider.GetRequiredService<ApplicationDbContext>();
+        var configuration = serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var logger        = serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("LaundryHub2.0.Data.DbInitializer");
 
         // ── Roles ──────────────────────────────────────────────────────────────
         foreach (var role in Roles)
@@ -23,60 +24,121 @@ public static class DbInitializer
         }
 
         // ── Default Admin account ──────────────────────────────────────────────
-        var adminEmail   = "admin@laundryhub.ph";
+        var adminEmail = "admin@laundryhub.ph";
         var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
         if (existingAdmin == null)
         {
-            var adminUser = new ApplicationUser
+            var adminPassword = configuration["SeedUsers:AdminPassword"];
+            if (string.IsNullOrWhiteSpace(adminPassword))
             {
-                UserName      = adminEmail,
-                Email         = adminEmail,
-                EmailConfirmed = true,
-                FullName      = "System Administrator",
-                District      = "Poblacion",
-                CreatedAt     = DateTime.UtcNow
-            };
+                logger.LogWarning("Seed user creation skipped for '{AdminEmail}': 'SeedUsers:AdminPassword' configuration key is missing or empty.", adminEmail);
+            }
+            else
+            {
+                var adminUser = new ApplicationUser
+                {
+                    UserName       = adminEmail,
+                    Email          = adminEmail,
+                    EmailConfirmed = true,
+                    FullName       = "System Administrator",
+                    District       = "Poblacion",
+                    CreatedAt      = DateTime.UtcNow
+                };
 
-            var result = await userManager.CreateAsync(adminUser, "Admin123!");
-            if (result.Succeeded)
-                await userManager.AddToRoleAsync(adminUser, "Admin");
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    logger.LogInformation("Seed user '{AdminEmail}' created successfully.", adminEmail);
+                }
+                else
+                {
+                    var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create seed user '{AdminEmail}': {Errors}", adminEmail, errors);
+                }
+            }
+        }
+        else
+        {
+            logger.LogDebug("Seed user '{AdminEmail}' already exists; no password changes were made.", adminEmail);
         }
 
         // ── Default Rider accounts ─────────────────────────────────────────────
+        var riderPassword = configuration["SeedUsers:RiderPassword"];
         var rider1Email = "pedro.rider@laundryhub.ph";
-        if (await userManager.FindByEmailAsync(rider1Email) == null)
+        var existingRider1 = await userManager.FindByEmailAsync(rider1Email);
+        if (existingRider1 == null)
         {
-            var rider1 = new ApplicationUser
+            if (string.IsNullOrWhiteSpace(riderPassword))
             {
-                UserName = rider1Email,
-                Email = rider1Email,
-                EmailConfirmed = true,
-                FullName = "Pedro Cruz",
-                PhoneNumber = "+639171234567",
-                District = "Poblacion",
-                CreatedAt = DateTime.UtcNow
-            };
-            var res = await userManager.CreateAsync(rider1, "Rider123!");
-            if (res.Succeeded)
-                await userManager.AddToRoleAsync(rider1, "Rider");
+                logger.LogWarning("Seed user creation skipped for '{RiderEmail}': 'SeedUsers:RiderPassword' configuration key is missing or empty.", rider1Email);
+            }
+            else
+            {
+                var rider1 = new ApplicationUser
+                {
+                    UserName       = rider1Email,
+                    Email          = rider1Email,
+                    EmailConfirmed = true,
+                    FullName       = "Pedro Cruz",
+                    PhoneNumber    = "+639171234567",
+                    District       = "Poblacion",
+                    CreatedAt      = DateTime.UtcNow
+                };
+                var res = await userManager.CreateAsync(rider1, riderPassword);
+                if (res.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(rider1, "Rider");
+                    logger.LogInformation("Seed user '{RiderEmail}' created successfully.", rider1Email);
+                }
+                else
+                {
+                    var errors = string.Join("; ", res.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create seed user '{RiderEmail}': {Errors}", rider1Email, errors);
+                }
+            }
+        }
+        else
+        {
+            logger.LogDebug("Seed user '{RiderEmail}' already exists; no password changes were made.", rider1Email);
         }
 
         var rider2Email = "carlo.rider@laundryhub.ph";
-        if (await userManager.FindByEmailAsync(rider2Email) == null)
+        var existingRider2 = await userManager.FindByEmailAsync(rider2Email);
+        if (existingRider2 == null)
         {
-            var rider2 = new ApplicationUser
+            if (string.IsNullOrWhiteSpace(riderPassword))
             {
-                UserName = rider2Email,
-                Email = rider2Email,
-                EmailConfirmed = true,
-                FullName = "Carlo Ramos",
-                PhoneNumber = "+639189876543",
-                District = "Buhangin",
-                CreatedAt = DateTime.UtcNow
-            };
-            var res = await userManager.CreateAsync(rider2, "Rider123!");
-            if (res.Succeeded)
-                await userManager.AddToRoleAsync(rider2, "Rider");
+                logger.LogWarning("Seed user creation skipped for '{RiderEmail}': 'SeedUsers:RiderPassword' configuration key is missing or empty.", rider2Email);
+            }
+            else
+            {
+                var rider2 = new ApplicationUser
+                {
+                    UserName       = rider2Email,
+                    Email          = rider2Email,
+                    EmailConfirmed = true,
+                    FullName       = "Carlo Ramos",
+                    PhoneNumber    = "+639189876543",
+                    District       = "Buhangin",
+                    CreatedAt      = DateTime.UtcNow
+                };
+                var res = await userManager.CreateAsync(rider2, riderPassword);
+                if (res.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(rider2, "Rider");
+                    logger.LogInformation("Seed user '{RiderEmail}' created successfully.", rider2Email);
+                }
+                else
+                {
+                    var errors = string.Join("; ", res.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create seed user '{RiderEmail}': {Errors}", rider2Email, errors);
+                }
+            }
+        }
+        else
+        {
+            logger.LogDebug("Seed user '{RiderEmail}' already exists; no password changes were made.", rider2Email);
         }
 
         // ── Default LaundryService catalog ────────────────────────────────────
@@ -109,6 +171,17 @@ public static class DbInitializer
         await EnsureClaimsTableAsync(context);
         await EnsureLoyaltyTransactionsTableAsync(context);
         await EnsureLaundryOrderSequencesTableAsync(context);
+        await EnsureNotificationOrderNullableAsync(context);
+    }
+
+    private static async Task EnsureNotificationOrderNullableAsync(ApplicationDbContext context)
+    {
+        var nullable = await context.Database.SqlQuery<int>(
+            $"SELECT COUNT(*) AS Value FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND (TABLE_NAME = 'Notifications' OR TABLE_NAME = 'notifications') AND COLUMN_NAME = 'OrderId' AND IS_NULLABLE = 'YES'")
+            .SingleAsync();
+        if (nullable == 0)
+            await context.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE `Notifications` MODIFY COLUMN `OrderId` int NULL;");
     }
 
     private static async Task EnsureLaundryOrderSequencesTableAsync(ApplicationDbContext context)
@@ -149,7 +222,7 @@ public static class DbInitializer
             "CREATE TABLE IF NOT EXISTS `Notifications` (" +
             "`Id` int NOT NULL AUTO_INCREMENT," +
             "`RecipientUserId` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL," +
-            "`OrderId` int NOT NULL," +
+            "`OrderId` int NULL," +
             "`Type` varchar(50) NOT NULL," +
             "`Title` varchar(150) NOT NULL," +
             "`Body` varchar(1000) NOT NULL," +

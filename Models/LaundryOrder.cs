@@ -20,6 +20,8 @@ public class LaundryOrder
     public DateTime PreferredPickupDate { get; set; }
     public string PreferredPickupTime { get; set; } = string.Empty;   // e.g. "10:00 AM"
     public string PickupLocation { get; set; } = string.Empty;
+    public decimal? PickupLatitude { get; set; }
+    public decimal? PickupLongitude { get; set; }
     public string ContactNumber { get; set; } = string.Empty;
     public string? SpecialInstructions { get; set; }
 
@@ -46,6 +48,14 @@ public class LaundryOrder
     /// <summary>Relative path under wwwroot/uploads/orders/{id}/weight.*</summary>
     public string? WeightPhotoPath { get; set; }
     public DateTime? WeightConfirmedAt { get; set; }
+    public DateTime? WeightConfirmationDeadline { get; set; }
+    public DateTime? WeightConfirmationExtensionDeadline { get; set; }
+    public string? WeightOverrideByStaffId { get; set; }
+    public string? WeightOverrideSupervisorId { get; set; }
+    public DateTime? WeightOverrideApprovedAt { get; set; }
+    public DateTime? WeightOverrideAt { get; set; }
+    public string? WeightOverrideReason { get; set; }
+    public string? EstimatedWeightMethod { get; set; }
     /// <summary>Calculated: WeightKg × blended service rate. Stored once confirmed.</summary>
     public decimal? TotalAmount { get; set; }
 
@@ -67,13 +77,34 @@ public class LaundryOrder
     // ── Payment deadline and late penalty ─────────────────────────────────────
     /// <summary>
     /// The moment the customer was notified that their order is ReadyForDelivery.
-    /// The 24-hour payment deadline clock starts from this timestamp — NOT from
-    /// internal processing completion, so shop-side delays never count against the customer.
+    /// Kept for informational/display purposes; the authoritative payment deadline
+    /// clock is now driven by <see cref="PaymentDeadlineAt"/>.
     /// </summary>
     public DateTime? ReadyForDeliveryNotifiedAt { get; set; }
 
     /// <summary>
+    /// UTC timestamp when the order entered AwaitingPayment — the moment the
+    /// customer is formally asked to pay. Set once and never overwritten.
+    /// </summary>
+    public DateTime? AwaitingPaymentAt { get; set; }
+
+    /// <summary>
+    /// The original 24-hour payment deadline: AwaitingPaymentAt + 24 hours.
+    /// This is the immutable anchor for all downstream deadline calculations.
+    /// Set once when AwaitingPaymentAt is first written; never reset.
+    /// </summary>
+    public DateTime? PaymentDeadlineAt { get; set; }
+
+    /// <summary>
+    /// End of the 72-hour grace period: PaymentDeadlineAt + 72 hours.
+    /// Late-payment penalty accrual begins only after this timestamp.
+    /// Set once alongside PaymentDeadlineAt; never reset.
+    /// </summary>
+    public DateTime? GracePeriodEndAt { get; set; }
+
+    /// <summary>
     /// Accrued late-payment penalty: 3% of TotalAmount per day overdue, capped at 30% (10 days).
+    /// Overdue days are measured from GracePeriodEndAt, not from PaymentDeadlineAt.
     /// Re-calculated and stored on read or via background job.
     /// </summary>
     public decimal? AccruedPenaltyAmount { get; set; }

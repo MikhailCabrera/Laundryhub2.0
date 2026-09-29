@@ -27,9 +27,15 @@ public class CustomerDashboardViewModel
 
     public int CompletedOrdersCount => Orders.Count(o => o.Status == OrderStatus.Delivered);
 
+    /// <summary>Net cash spent: base + late penalty − redeemed loyalty discounts, floored at zero per order.</summary>
     public decimal TotalSpent => Orders
         .Where(o => o.IsPaymentConfirmed && o.TotalAmount.HasValue)
-        .Sum(o => o.TotalAmount!.Value);
+        .Sum(o => Math.Max(0m, o.TotalAmount!.Value + (o.AccruedPenaltyAmount ?? 0m) - (LoyaltyDiscounts.TryGetValue(o.Id, out var d) ? d : 0m)));
+
+    /// <summary>Net amount still due across unpaid orders (base + penalty − discounts).</summary>
+    public decimal OutstandingBalance => Orders
+        .Where(o => !o.IsPaymentConfirmed && o.TotalAmount.HasValue && o.Status != OrderStatus.Cancelled && !o.IsAbandoned)
+        .Sum(o => Math.Max(0m, (o.TotalAmount ?? 0m) + (o.AccruedPenaltyAmount ?? 0m) - (LoyaltyDiscounts.TryGetValue(o.Id, out var d) ? d : 0m)));
 }
 
 public class BookPickupInputModel
@@ -47,6 +53,9 @@ public class BookPickupInputModel
     [Required(ErrorMessage = "Pickup address / location is required.")]
     [StringLength(500, ErrorMessage = "Location cannot exceed 500 characters.")]
     public string PickupLocation { get; set; } = string.Empty;
+
+    public decimal? PickupLatitude { get; set; }
+    public decimal? PickupLongitude { get; set; }
 
     [Required(ErrorMessage = "Contact number is required.")]
     [RegularExpression(@"^(09|\+639)\d{9}$", ErrorMessage = "Please enter a valid Philippine mobile number.")]
@@ -67,4 +76,19 @@ public class RedeemPointsInputModel
     [Required(ErrorMessage = "Points are required.")]
     [Range(100, 1000000, ErrorMessage = "Points must be between 100 and 1,000,000.")]
     public int Points { get; set; }
+}
+
+/// <summary>
+/// Read-only payment receipt projection. Built only from already-persisted
+/// <see cref="LaundryOrder"/> fields plus the redeemed loyalty discount —
+/// no new table, no card data, no secrets.
+/// </summary>
+public class PaymentReceiptViewModel
+{
+    public LaundryOrder Order { get; set; } = null!;
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal BaseAmount { get; set; }
+    public decimal PenaltyAmount { get; set; }
+    public decimal LoyaltyDiscount { get; set; }
+    public decimal NetPaid { get; set; }
 }

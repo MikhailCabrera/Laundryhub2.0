@@ -713,7 +713,7 @@
                     <div class="form-group">
                         <div class="form-label-row">
                             <label asp-for="Password" class="form-label">Password</label>
-                            <a href="javascript:alert('Password reset instructions have been dispatched to your email.');" style="font-size: 0.75rem; color: var(--brand-royal); text-decoration: none; font-weight: 600;">Forgot password?</a>
+                            <a href="mailto:support@laundryhub.ph?subject=Password%20reset%20request" style="font-size: 0.75rem; color: var(--brand-royal); text-decoration: none; font-weight: 600;">Forgot password? Contact support</a>
                         </div>
                         <div class="form-input-wrap">
                             <input asp-for="Password" type="password" class="form-input" id="loginPagePassword" placeholder="Enter your password" autocomplete="current-password" required />
@@ -742,13 +742,13 @@
 
                     <!-- Don't have an account link at the BOTTOM -->
                     <div class="auth-switch-bottom">
-                        Don't have an account? <a href="/Account/Register">Sign up</a>
+                        Don't have an account? <a href="/Account/Register@(string.IsNullOrEmpty(Model.ReturnUrl) ? "" : "?returnUrl=" + Uri.EscapeDataString(Model.ReturnUrl))">Sign up</a>
                     </div>
                 </form>
             </div>
 
             <div class="form-bottom-footer">
-                Need help? <a href="mailto:support@laundryhub.ph" style="color: var(--brand-royal); text-decoration: none; font-weight: 600;">Contact Support</a> • <a href="/Terms" target="_blank" style="color: var(--text-muted); text-decoration: none;">Terms & Conditions</a>
+                Need help? <a href="mailto:support@laundryhub.ph" style="color: var(--brand-royal); text-decoration: none; font-weight: 600;">Contact Support</a> • <a href="/Terms" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: none;">Terms & Conditions</a>
             </div>
         </main>
     </div>

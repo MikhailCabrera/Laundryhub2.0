@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LaundryHub2.0")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+195fe56f3ae4a78e01d82d72dec8529f9c1b54cc")]
 [assembly: System.Reflection.AssemblyProductAttribute("LaundryHub2.0")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LaundryHub2.0")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

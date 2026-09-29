@@ -1,8 +1,30 @@
 @model LaundryHub2._0.Models.CustomerDashboardViewModel
+@using Microsoft.Extensions.Options
+@inject IOptions<LaundryHub2._0.Models.MapSettings> MapSettingsOptions
 @{
     Layout = null;
     ViewData["Title"] = "Customer Portal | Laundry Hub Davao City";
     var activeTab = ViewData["ActiveTab"] as string ?? "dashboard";
+    var mapSettings = MapSettingsOptions.Value;
+}
+@functions {
+    private static readonly TimeZoneInfo ManilaTz = ResolveManilaTz();
+
+    private static TimeZoneInfo ResolveManilaTz()
+    {
+        try { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Manila"); }
+        catch { try { return TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"); } catch { return TimeZoneInfo.Utc; } }
+    }
+
+    /// <summary>All customer-facing times render in Asia/Manila regardless of server TZ.</summary>
+    private static DateTime ManilaTime(DateTime value)
+    {
+        var utc = value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, ManilaTz);
+    }
+
+    /// <summary>UTC round-trip stamp for the shared timeline payload.</summary>
+    private static string? JsonUtc(DateTime? value) => value == null ? null : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc).ToString("o");
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -16,54 +38,264 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/maplibre-gl/maplibre-gl.css" asp-append-version="true" />
 
     <style>
+        /* ── Customer Map Picker (Phase 2D) ── */
+        .pickup-map-container {
+            margin-bottom: 20px;
+            border-radius: var(--lh-radius-md);
+            overflow: hidden;
+            border: 1.5px solid var(--lh-border-light);
+            background: var(--lh-white);
+        }
+        .pickup-map-header {
+            padding: 12px 16px;
+            background: var(--lh-blue-25);
+            border-bottom: 1px solid var(--lh-border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .pickup-map-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pickup-map-title {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--lh-text-headings);
+            margin: 0;
+        }
+        .pickup-map-sub {
+            font-size: 0.75rem;
+            color: var(--lh-text-muted);
+        }
+        .btn-use-location {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--lh-white);
+            border: 1px solid var(--lh-border-light);
+            border-radius: var(--lh-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--lh-blue-600);
+            cursor: pointer;
+            transition: var(--lh-transition);
+        }
+        .btn-use-location:hover {
+            background: var(--lh-blue-50);
+            border-color: var(--lh-blue-300);
+        }
+        #pickupMap {
+            width: 100%;
+            height: 300px;
+            min-height: 260px;
+        }
+        .pickup-map-footer {
+            padding: 10px 16px;
+            background: var(--lh-white);
+            border-top: 1px solid var(--lh-border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+        .map-coords-badge {
+            color: #059669;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ── Customer Live Rider Tracking (Phase 2E) ── */
+        .live-tracking-card {
+            margin-bottom: 24px;
+            border-radius: var(--lh-radius-lg, 16px);
+            border: 1.5px solid var(--lh-border-light, #E2E8F0);
+            background: var(--lh-white, #FFFFFF);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .live-tracking-header {
+            padding: 14px 20px;
+            background: #F8FAFC;
+            border-bottom: 1px solid var(--lh-border-subtle, #E2E8F0);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .live-tracking-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--lh-text-headings, #0F172A);
+        }
+        .live-indicator-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #F1F5F9;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+        }
+        .live-indicator-pill.is-live {
+            background: #ECFDF5;
+            color: #065F46;
+            border-color: #A7F3D0;
+        }
+        .live-indicator-pill.is-stale {
+            background: #FFFBEB;
+            color: #92400E;
+            border-color: #FDE68A;
+        }
+        .live-indicator-pill.is-waiting {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border-color: #BFDBFE;
+        }
+        .live-indicator-pill.is-reconnecting {
+            background: #FEF2F2;
+            color: #991B1B;
+            border-color: #FECACA;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+        .live-indicator-pill.is-live .live-dot {
+            animation: pulse-live 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        @@keyframes pulse-live {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.25); }
+        }
+        #customerTrackingMap {
+            width: 100%;
+            height: 380px;
+            min-height: 300px;
+            background: #F1F5F9;
+        }
+        .live-tracking-footer {
+            padding: 12px 20px;
+            background: #FFFFFF;
+            border-top: 1px solid var(--lh-border-subtle, #E2E8F0);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.8125rem;
+        }
+        .tracking-status-text {
+            color: var(--lh-text-body, #334155);
+            font-weight: 500;
+        }
+        .tracking-legend {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .tracking-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--lh-text-muted, #64748B);
+            font-weight: 500;
+        }
+        .tracking-legend-pin {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .tracking-legend-pin.customer-pin {
+            background: #2563EB;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        .tracking-legend-pin.rider-pin {
+            background: #10B981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+        }
+
+        /* Custom MapLibre Marker for Rider */
+        .rider-map-marker {
+            width: 36px;
+            height: 36px;
+            background: #10B981;
+            border: 2.5px solid #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .rider-map-marker:hover {
+            transform: scale(1.1);
+        }
+        .rider-map-marker svg {
+            width: 20px;
+            height: 20px;
+            color: #FFFFFF;
+        }
+        .customer-map-marker {
+            width: 32px;
+            height: 32px;
+            background: #2563EB;
+            border: 2.5px solid #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .customer-map-marker svg {
+            width: 18px;
+            height: 18px;
+            color: #FFFFFF;
+        }
+
         :root {
-            /* Palette: Deep Navy & Royal Blue */
-            --lh-navy-950: #071324;
-            --lh-navy-900: #0B1E36;
-            --lh-navy-800: #102A4C;
-            --lh-navy-700: #163865;
-            --lh-blue-600: #1D4ED8;
-            --lh-blue-500: #1E60D5;
-            --lh-blue-400: #3B82F6;
-            --lh-blue-300: #60A5FA;
-            --lh-blue-200: #93C5FD;
-            --lh-blue-100: #BFDBFE;
-            --lh-blue-50:  #EBF3FE;
-            --lh-blue-25:  #F4F8FE;
-            --lh-blue-10:  #F8FAFD;
-
-            --lh-white: #FFFFFF;
-            --lh-text-headings: #0B1E36;
-            --lh-text-body: #334E68;
-            --lh-text-muted: #627D98;
-            --lh-border-light: #D8E6F8;
-            --lh-border-subtle: #E2EDFA;
-            --lh-border-focus: #1E60D5;
-
+            /* --lh-* design tokens load from the canonical wwwroot/css/site.css (linked above); page-scoped vars stay here. */
             --c-active: #10B981;
             --c-active-bg: #ECFDF5;
             --c-active-border: #A7F3D0;
             --c-warning: #F59E0B;
+
             --c-warning-bg: #FFFBEB;
             --c-warning-border: #FDE68A;
             --c-danger: #EF4444;
             --c-danger-bg: #FEF2F2;
             --c-danger-border: #FECACA;
 
-            --lh-font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --lh-font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
             --sidebar-width: 290px;
-            --lh-shadow-sm: 0 2px 6px rgba(16, 42, 76, 0.04);
-            --lh-shadow-md: 0 8px 24px rgba(16, 42, 76, 0.08);
-            --lh-shadow-lg: 0 16px 36px rgba(16, 42, 76, 0.12);
-            --lh-transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            --lh-radius-sm: 6px;
-            --lh-radius-md: 10px;
-            --lh-radius-lg: 16px;
-            --lh-radius-xl: 24px;
+
+            /* Shared responsive contract: card radius (20-24px) + touch minimum token. */
+            --lh-card-radius: 20px;
+            --lh-touch-min: 0px;
         }
 
         *, *::before, *::after {
@@ -370,8 +602,11 @@
         .quick-book-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             padding: 10px 20px;
+            min-height: 44px;
+            min-width: 44px;
             background: linear-gradient(135deg, var(--lh-blue-600) 0%, var(--lh-blue-400) 100%);
             color: var(--lh-white);
             border: none;
@@ -399,7 +634,7 @@
         .stat-card {
             background: var(--lh-white);
             border: 1px solid var(--lh-border-subtle);
-            border-radius: var(--lh-radius-lg);
+            border-radius: var(--lh-card-radius);
             padding: 22px 20px;
             box-shadow: var(--lh-shadow-sm);
             display: flex;
@@ -467,7 +702,7 @@
         .content-card {
             background: var(--lh-white);
             border: 1px solid var(--lh-border-subtle);
-            border-radius: var(--lh-radius-lg);
+            border-radius: var(--lh-card-radius);
             box-shadow: var(--lh-shadow-sm);
             overflow: hidden;
         }
@@ -517,7 +752,7 @@
 
         .service-card {
             border: 2px solid var(--lh-border-light);
-            border-radius: var(--lh-radius-lg);
+            border-radius: var(--lh-card-radius);
             padding: 18px;
             background-color: var(--lh-white);
             transition: var(--lh-transition);
@@ -531,6 +766,12 @@
             border-color: var(--lh-blue-500);
             background-color: var(--lh-blue-25);
             box-shadow: 0 0 0 3px rgba(30, 96, 213, 0.15);
+        }
+
+        .service-select-label:focus-within .service-card {
+            border-color: var(--lh-blue-500);
+            box-shadow: 0 0 0 3px rgba(30, 96, 213, 0.35);
+            outline: none;
         }
 
         .service-card-top {
@@ -581,6 +822,12 @@
             color: var(--lh-text-headings);
         }
 
+        .form-error {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--c-danger);
+        }
+
         .form-control {
             width: 100%;
             height: 46px;
@@ -616,8 +863,9 @@
 
         .terms-checkbox-wrap input[type="checkbox"] {
             margin-top: 3px;
-            width: 17px;
-            height: 17px;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
             accent-color: var(--lh-blue-600);
             cursor: pointer;
         }
@@ -771,6 +1019,8 @@
 
         .btn-cancel-order {
             padding: 6px 12px;
+            min-height: 44px;
+            min-width: 44px;
             background-color: var(--c-danger-bg);
             border: 1px solid var(--c-danger-border);
             color: var(--c-danger);
@@ -788,89 +1038,98 @@
 
         /* ==========================================================================
            SERVICE TRACKING TIMELINE
+           Moved to the shared `.lh-timeline*` family in ~/css/site.css; the
+           stage derivation and renderer now live in ~/js/order-timeline.js.
            ========================================================================== */
-        .timeline-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: relative;
-            padding-left: 28px;
-            margin-top: 10px;
+
+        /* ============ Shared responsive contract (breakpoints 1024px / 640px) ============ */
+
+        /* Horizontal scroll lives on the table wrapper only — never on the page. */
+        .table-scroll {
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .timeline-container::before {
-            content: '';
+        .table-scroll th:first-child,
+        .table-scroll td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: var(--lh-white);
+        }
+
+        .table-scroll thead th:first-child {
+            background: var(--lh-blue-25);
+            z-index: 3;
+        }
+
+        .table-scroll tbody tr:hover td:first-child {
+            background: var(--lh-blue-25);
+        }
+
+        .table-scroll th:first-child::after,
+        .table-scroll td:first-child::after {
+            content: "";
             position: absolute;
-            left: 11px;
-            top: 12px;
-            bottom: 12px;
-            width: 2px;
-            background-color: var(--lh-border-light);
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--lh-border-subtle);
         }
 
-        .timeline-step {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .timeline-dot {
-            position: absolute;
-            left: -28px;
-            top: 3px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background-color: var(--lh-white);
-            border: 2px solid var(--lh-border-light);
-            display: flex;
+        /* Condensed essential-column disclosure control (injected by the row-toggle script). */
+        .row-toggle {
+            display: none;
             align-items: center;
             justify-content: center;
-            z-index: 2;
-            transition: var(--lh-transition);
-        }
-
-        .timeline-step.completed .timeline-dot {
-            background-color: var(--c-active);
-            border-color: var(--c-active);
-            color: var(--lh-white);
-        }
-
-        .timeline-step.active .timeline-dot {
-            background-color: var(--lh-blue-600);
-            border-color: var(--lh-blue-300);
-            color: var(--lh-white);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
-            animation: pulseRing 1.8s infinite;
-        }
-
-        @@keyframes pulseRing {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
-
-        .timeline-title {
-            font-family: var(--lh-font-heading);
-            font-size: 0.9375rem;
-            font-weight: 700;
-            color: var(--lh-text-headings);
-        }
-
-        .timeline-desc {
-            font-size: 0.8125rem;
+            min-width: var(--lh-touch-min);
+            min-height: var(--lh-touch-min);
+            margin-right: 8px;
+            border: 1px solid var(--lh-border-light);
+            border-radius: var(--lh-radius-sm);
+            background: var(--lh-white);
             color: var(--lh-text-muted);
+            cursor: pointer;
+            vertical-align: middle;
         }
 
-        /* Responsive Breakpoints */
+        .row-toggle[aria-expanded="true"] svg {
+            transform: rotate(180deg);
+        }
+
+        /* 1024px and below: essential columns only; the rest return when a row is expanded. */
         @@media (max-width: 1024px) {
             .stat-cards-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .customer-main {
+                min-width: 0;
+                padding: 28px 20px;
+            }
+            .table-scroll th:nth-child(n+4):not(:last-child),
+            .table-scroll td:nth-child(n+4):not(:last-child) {
+                display: none;
+            }
+            .table-scroll tr.row-expanded th:nth-child(n+4):not(:last-child),
+            .table-scroll tr.row-expanded td:nth-child(n+4):not(:last-child) {
+                display: table-cell;
+            }
+            .row-toggle {
+                display: inline-flex;
+            }
+            .table-scroll .order-table th,
+            .table-scroll .order-table td {
+                padding: 12px;
+            }
         }
 
-        @@media (max-width: 768px) {
+        /* 640px and below: two essential columns plus the trailing action column. */
+        @@media (max-width: 640px) {
             .customer-sidebar {
                 position: static;
                 width: 100%;
@@ -881,13 +1140,50 @@
             }
             .customer-main {
                 margin-left: 0;
-                padding: 24px 16px;
+                padding: 20px 14px;
             }
             .stat-cards-grid {
                 grid-template-columns: 1fr;
             }
             .form-row {
                 grid-template-columns: 1fr;
+            }
+            .table-scroll th:nth-child(n+3):not(:last-child),
+            .table-scroll td:nth-child(n+3):not(:last-child) {
+                display: none;
+            }
+            .table-scroll tr.row-expanded th:nth-child(n+3):not(:last-child),
+            .table-scroll tr.row-expanded td:nth-child(n+3):not(:last-child) {
+                display: table-cell;
+            }
+        }
+
+        /* Touch sizing: 44px minimums come from the token, never per-button overrides. */
+        @@media (pointer: coarse) {
+            :root {
+                --lh-touch-min: 44px;
+            }
+            .btn,
+            .btn-sm,
+            .chip,
+            .quick-book-btn,
+            .page-btn,
+            .modal-close,
+            .tab-btn,
+            .sidebar-nav-item {
+                min-height: var(--lh-touch-min);
+            }
+            .btn,
+            .btn-sm,
+            .chip,
+            .page-btn,
+            .modal-close,
+            .tab-btn {
+                min-width: var(--lh-touch-min);
+            }
+            .row-toggle {
+                min-width: var(--lh-touch-min);
+                min-height: var(--lh-touch-min);
             }
         }
     </style>
@@ -1080,7 +1376,7 @@
                                 <div style="padding: 14px 20px; border-bottom: 1px solid var(--lh-border-subtle); @(note.IsRead ? "" : "background: var(--lh-blue-25);")">
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                                         <strong style="font-size: 0.9rem;">@note.Title</strong>
-                                        <span style="font-size: 0.75rem; color: var(--lh-text-muted); white-space: nowrap;">@note.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                                        <span style="font-size: 0.75rem; color: var(--lh-text-muted); white-space: nowrap;">@ManilaTime(note.CreatedAt).ToString("MMM dd, yyyy h:mm tt")</span>
                                     </div>
                                     <p style="font-size: 0.85rem; color: var(--lh-text-body); margin: 4px 0 0;">@note.Body</p>
                                     @if (!note.IsRead)
@@ -1114,7 +1410,8 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
@@ -1143,12 +1440,13 @@
                                                 @(ord.TotalAmount.HasValue ? $"₱{ord.TotalAmount.Value:N2}" : "Pending Weight")
                                             </td>
                                             <td>
-                                                <button type="button" class="quick-book-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="switchTab('tracking')">Track</button>
+                                                <button type="button" class="quick-book-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="trackOrder(@ord.Id)">Track</button>
                                             </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            </div>
                         }
                     </div>
                 </div>
@@ -1165,7 +1463,7 @@
 
                 <div class="content-card">
                     <div class="content-card-body">
-                        <form asp-controller="Customer" asp-action="BookPickup" method="post" id="bookPickupForm">
+                        <form asp-controller="Customer" asp-action="BookPickup" method="post" id="bookPickupForm" onsubmit="return validatePickupForm()">
                             @Html.AntiForgeryToken()
 
                             <!-- Step 1: Select Services -->
@@ -1175,7 +1473,7 @@
                                     @foreach (var svc in Model.AvailableServices)
                                     {
                                         <label class="service-select-label">
-                                            <input type="checkbox" name="SelectedServiceIds" value="@svc.Id" checked="@(svc.Name.Contains("Wash & Dry"))" />
+                                            <input type="checkbox" name="SelectedServiceIds" value="@svc.Id" data-rate="@svc.PricePerKg" data-name="@svc.Name" @(svc.Name.Contains("Wash & Dry") ? "checked" : null) />
                                             <div class="service-card">
                                                 <div class="service-card-top">
                                                     <span class="service-card-name">@svc.Name</span>
@@ -1188,13 +1486,30 @@
                                 </div>
                             </div>
 
+                            <!-- Booking estimate (advisory only — final bill follows in-shop scale weighing) -->
+                            <div style="margin-bottom: 24px;">
+                                <label class="form-label" style="font-size: 1rem; margin-bottom: 12px; display: block;">Estimate before you book</label>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="estimateWeightKg">Estimated weight (kg)</label>
+                                        <input type="number" id="estimateWeightKg" class="form-control" min="0" step="0.5" value="5" inputmode="decimal" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Live estimate</label>
+                                        <div id="bookingEstimate" style="font-size: 0.875rem; color: var(--lh-text-body); background: var(--lh-blue-25); border: 1.5px solid var(--lh-border-light); border-radius: var(--lh-radius-md); padding: 10px 14px; min-height: 46px;">Select services to see an estimate.</div>
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.75rem; color: var(--lh-text-muted); margin: 0;">3 kg minimum per pickup · ₱50 delivery fee under 5 kg, FREE at 5 kg+. Final amount is weighed in-shop.</p>
+                            </div>
+
                             <!-- Step 2: Pickup Schedule & Contact Details -->
                             <label class="form-label" style="font-size: 1rem; margin-bottom: 12px; display: block;">2. Pickup Details & Schedule</label>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Preferred Pickup Date</label>
-                                    <input type="date" name="PreferredPickupDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                    <label class="form-label" for="pickupDateInput">Preferred Pickup Date (Mon–Sat, closed Sundays)</label>
+                                    <input type="date" id="pickupDateInput" name="PreferredPickupDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                    <span class="form-error" id="err-pickup-date"></span>
                                 </div>
 
                                 <div class="form-group">
@@ -1220,6 +1535,41 @@
                                     <input type="tel" name="ContactNumber" class="form-control" value="@Model.User.PhoneNumber" placeholder="e.g. 09171234567" required />
                                 </div>
                             </div>
+
+                            <!-- Map Picker for Exact Pickup Coordinates (Phase 2D) -->
+                            <div class="pickup-map-container">
+                                <div class="pickup-map-header">
+                                    <div class="pickup-map-title-wrap">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lh-blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        <div>
+                                            <p class="pickup-map-title">Pin Exact Pickup Location</p>
+                                            <span class="pickup-map-sub">Click map or drag the pin to your exact building / entrance</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-use-location" id="btnUseCurrentLocation" onclick="useCurrentCustomerLocation()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                                        </svg>
+                                        Use My Current Location
+                                    </button>
+                                </div>
+                                <div id="pickupMap" aria-label="Interactive map for selecting pickup pin"></div>
+                                <div class="pickup-map-footer">
+                                    <div class="map-coords-badge" id="mapCoordsDisplay">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        <span>Pin set: <span id="coordsDisplayValues">@(mapSettings.InitialLatitude.ToString("F5")), @(mapSettings.InitialLongitude.ToString("F5"))</span></span>
+                                    </div>
+                                    <div id="mapLocationMsg" style="color:var(--lh-text-muted);font-size:0.75rem;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs for exact pickup coordinates -->
+                            <input type="hidden" id="pickupLatitude" name="PickupLatitude" value="@mapSettings.InitialLatitude" />
+                            <input type="hidden" id="pickupLongitude" name="PickupLongitude" value="@mapSettings.InitialLongitude" />
 
                             <div class="form-group">
                                 <label class="form-label">Special Instructions or Fabric Notes (Optional)</label>
@@ -1260,10 +1610,10 @@
                             Pending Pickups <span class="tab-badge">@Model.Orders.Count(o => o.Status == LaundryHub2._0.Models.OrderStatus.Pending)</span>
                         </button>
                         <button type="button" class="history-tab-btn" onclick="filterHistoryTab('ongoing', this)">
-                            Ongoing Orders <span class="tab-badge">@Model.ActiveOrdersCount</span>
+                            Ongoing Orders <span class="tab-badge">@Model.Orders.Count(o => o.Status != LaundryHub2._0.Models.OrderStatus.Pending && o.Status != LaundryHub2._0.Models.OrderStatus.Delivered && o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && o.Status != LaundryHub2._0.Models.OrderStatus.Abandoned)</span>
                         </button>
                         <button type="button" class="history-tab-btn" onclick="filterHistoryTab('completed', this)">
-                            Completed / Past <span class="tab-badge">@Model.Orders.Count(o => o.Status == LaundryHub2._0.Models.OrderStatus.Delivered || o.Status == LaundryHub2._0.Models.OrderStatus.Cancelled)</span>
+                            Completed / Past <span class="tab-badge">@Model.Orders.Count(o => o.Status == LaundryHub2._0.Models.OrderStatus.Delivered || o.Status == LaundryHub2._0.Models.OrderStatus.Cancelled || o.Status == LaundryHub2._0.Models.OrderStatus.Abandoned)</span>
                         </button>
                     </div>
 
@@ -1278,7 +1628,8 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="history-pending-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
@@ -1289,7 +1640,7 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="history-pending-body">
                                     @foreach (var ord in pendingOrders)
                                     {
                                         <tr>
@@ -1309,6 +1660,8 @@
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="history-pending-pagination" aria-label="Pending orders pagination"></div>
                         }
                     </div>
 
@@ -1327,7 +1680,8 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="history-ongoing-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
@@ -1338,7 +1692,7 @@
                                         <th>Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="history-ongoing-body">
                                     @foreach (var ord in ongoingOrders)
                                     {
                                         <tr>
@@ -1355,15 +1709,17 @@
                                                 }
                                             </td>
                                             <td><span class="status-pill status-processing">@ord.Status.ToString()</span></td>
-                                            <td>@(ord.WeightKg.HasValue ? $"{ord.WeightKg.Value} kg" : "In Transit / Weighing")</td>
+                                            <td>@(ord.WeightKg.HasValue ? $"{ord.WeightKg.Value:N2} kg" : "In Transit / Weighing")</td>
                                             <td style="font-weight: 700;">@(ord.TotalAmount.HasValue ? $"₱{ord.TotalAmount.Value:N2}" : "Pending Weight")</td>
                                             <td>
-                                                <button type="button" class="quick-book-btn" style="padding: 5px 12px; font-size: 0.75rem;" onclick="switchTab('tracking')">Track Live</button>
+                                                <button type="button" class="quick-book-btn" style="padding: 5px 12px; font-size: 0.75rem;" onclick="trackOrder(@ord.Id)">Track Live</button>
                                             </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="history-ongoing-pagination" aria-label="Ongoing orders pagination"></div>
                         }
                     </div>
 
@@ -1381,7 +1737,8 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="history-completed-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
@@ -1392,10 +1749,10 @@
                                         <th>Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="history-completed-body">
                                     @foreach (var ord in completedOrders)
                                     {
-                                        <tr>
+                                        <tr data-pager-group="ord-@ord.Id">
                                             <td style="font-weight: 700;">@ord.OrderNumber</td>
                                             <td>@ord.CreatedAt.ToString("MMM dd, yyyy")</td>
                                             <td>@string.Join(", ", ord.OrderServices.Select(s => s.Service.Name))</td>
@@ -1406,11 +1763,11 @@
                                                     <div>@(ord.DeliveryRider?.FullName ?? "—")</div>
                                                     @if (ord.DeliveredAt.HasValue)
                                                     {
-                                                        <div style="font-size:0.75rem;color:var(--lh-text-muted);">@ord.DeliveredAt.Value.ToLocalTime().ToString("MMM d, h:mm tt")</div>
+                                                        <div style="font-size:0.75rem;color:var(--lh-text-muted);">@ManilaTime(ord.DeliveredAt.Value).ToString("MMM d, h:mm tt")</div>
                                                     }
                                                     @if (!string.IsNullOrEmpty(ord.DeliveryPhotoPath))
                                                     {
-                                                        <a href="@ord.DeliveryPhotoPath" target="_blank" rel="noopener" style="color:var(--lh-blue-600);font-size:0.75rem;font-weight:600;">View proof</a>
+                                                        <a href="@ord.DeliveryPhotoPath" target="_blank" rel="noopener noreferrer" style="color:var(--lh-blue-600);font-size:0.75rem;font-weight:600;">View proof</a>
                                                     }
                                                 }
                                                 else
@@ -1422,9 +1779,46 @@
                                                 <span class="status-pill status-@ord.Status.ToString().ToLower()">@ord.Status.ToString()</span>
                                             </td>
                                         </tr>
+                                        @if (ord.Status == LaundryHub2._0.Models.OrderStatus.Delivered)
+                                        {
+                                            <tr data-pager-group="ord-@ord.Id">
+                                                <td colspan="6">
+                                                    <div class="content-card" style="margin:12px 0;">
+                                                        <div class="content-card-header">
+                                                            <h3 class="content-card-title">Report Damage or Loss</h3>
+                                                        </div>
+                                                        <div class="content-card-body">
+                                                            <p style="font-size:0.85rem;color:var(--lh-text-muted);margin:0 0 12px;">Something wrong with order @ord.OrderNumber? Describe it below and our team will review it.</p>
+                                                            <div id="selfclaim-form-@ord.Id">
+                                                                @Html.AntiForgeryToken()
+                                                                <div class="form-group">
+                                                                    <label class="form-label" for="selfclaim-type-@ord.Id">Issue type</label>
+                                                                    <select id="selfclaim-type-@ord.Id" class="form-control" style="max-width:280px;">
+                                                                        <option value="Damage">Damage</option>
+                                                                        <option value="Loss">Loss</option>
+                                                                        <option value="Other">Other</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <label class="form-label" for="selfclaim-desc-@ord.Id">What happened</label>
+                                                                    <textarea id="selfclaim-desc-@ord.Id" class="form-control" maxlength="1000" rows="3" placeholder="e.g. Blue shirt has a stain that was not there before..."></textarea>
+                                                                </div>
+                                                                <span id="err-selfclaim-@ord.Id" style="font-size:0.75rem;color:#DC2626;font-weight:600;"></span>
+                                                                <div id="ok-selfclaim-@ord.Id" style="font-size:0.85rem;color:#065F46;font-weight:600;margin-top:6px;"></div>
+                                                                <div style="margin-top:10px;">
+                                                                    <button type="button" class="quick-book-btn" style="padding:7px 16px;font-size:0.8125rem;" onclick="submitSelfClaim(@ord.Id)">File Claim</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="history-completed-pagination" aria-label="Completed orders pagination"></div>
                         }
                     </div>
                 </div>
@@ -1440,11 +1834,38 @@
                 </div>
 
                 @{
-                    var activeOrder = Model.Orders.FirstOrDefault(o => 
-                        o.Status != LaundryHub2._0.Models.OrderStatus.Delivered && 
-                        o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && 
+                    // Deep link (?tab=tracking&order=id) selects exactly that order when it
+                    // belongs to the caller (validated server-side); otherwise the default
+                    // below applies. The timeline below always renders this same object,
+                    // so Track can never show order A's timeline for order B.
+                    var requestedTrackingId = ViewData["TrackingOrderId"] as int?;
+                    var activeOrder = (requestedTrackingId.HasValue
+                        ? Model.Orders.FirstOrDefault(o => o.Id == requestedTrackingId.Value)
+                        : null)
+                        ?? Model.Orders.FirstOrDefault(o =>
+                        o.Status != LaundryHub2._0.Models.OrderStatus.Delivered &&
+                        o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled &&
                         o.Status != LaundryHub2._0.Models.OrderStatus.Abandoned) ?? Model.Orders.FirstOrDefault();
                 }
+
+                <div class="content-card" style="margin-bottom: 20px;">
+                    <div class="content-card-body" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <label class="form-label" for="trackingOrderSelect" style="margin: 0;">Tracked order</label>
+                        <select id="trackingOrderSelect" class="form-control" style="max-width: 320px;" onchange="if (this.value) trackOrder(this.value)">
+                            @foreach (var o in Model.Orders)
+                            {
+                                if (activeOrder != null && o.Id == activeOrder.Id)
+                                {
+                                    <option value="@o.Id" selected>@o.OrderNumber (@o.Status.ToString())</option>
+                                }
+                                else
+                                {
+                                    <option value="@o.Id">@o.OrderNumber (@o.Status.ToString())</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
 
                 @if (activeOrder == null)
                 {
@@ -1460,7 +1881,7 @@
                         <div class="content-card-header">
                             <div>
                                 <h3 class="content-card-title">Tracking Order: @activeOrder.OrderNumber</h3>
-                                <p style="font-size: 0.8125rem; color: var(--lh-text-muted);">Booked on @activeOrder.CreatedAt.ToString("MMMM dd, yyyy hh:mm tt")</p>
+                                <p style="font-size: 0.8125rem; color: var(--lh-text-muted);">Booked on @ManilaTime(activeOrder.CreatedAt).ToString("MMMM dd, yyyy hh:mm tt") (Asia/Manila)</p>
                             </div>
                             <span class="status-pill status-@activeOrder.Status.ToString().ToLower()">@activeOrder.Status.ToString()</span>
                         </div>
@@ -1495,97 +1916,84 @@
                                     </form>
                                 </div>
                             }
-                            <div class="timeline-container">
-                                <!-- Step 1: Placed -->
-                                <div class="timeline-step completed">
-                                    <div class="timeline-dot">✓</div>
-                                    <h4 class="timeline-title">1. Pickup Request Booked</h4>
-                                    <p class="timeline-desc">Scheduled for @activeOrder.PreferredPickupDate.ToString("MMM dd, yyyy") (@activeOrder.PreferredPickupTime)</p>
-                                </div>
 
-                                <!-- Step 2: Rider Assigned -->
-                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.RiderAssigned ? "completed" : "")">
-                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.RiderAssigned ? "✓" : "2")</div>
-                                    <h4 class="timeline-title">2. Rider Assigned</h4>
-                                    <p class="timeline-desc">
-                                        @(activeOrder.PickupRider != null ? $"Rider {activeOrder.PickupRider.FullName} ({activeOrder.PickupRider.PhoneNumber})" : "Awaiting shop rider dispatch")
-                                    </p>
-                                </div>
+                            <!-- Phase 2E: Customer Live Rider Tracking Map -->
+                            @{
+                                var isPickupTracking = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.RiderAssigned ||
+                                                       activeOrder.Status == LaundryHub2._0.Models.OrderStatus.PickedUp ||
+                                                       activeOrder.Status == LaundryHub2._0.Models.OrderStatus.InTransitToShop;
+                                var isDeliveryTracking = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.ReadyForDelivery ||
+                                                         activeOrder.Status == LaundryHub2._0.Models.OrderStatus.OutForDelivery ||
+                                                         activeOrder.Status == LaundryHub2._0.Models.OrderStatus.DeliveryAttemptFailed;
+                                var isTrackingEligible = isPickupTracking || isDeliveryTracking;
+                            }
 
-                                <!-- Step 3: Picked Up -->
-                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.PickedUp ? "completed" : "")">
-                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.PickedUp ? "✓" : "3")</div>
-                                    <h4 class="timeline-title">3. Collected by Rider</h4>
-                                    <p class="timeline-desc">Clothes securely loaded for transport to our central Davao wash facility.</p>
+                            <div class="live-tracking-card" id="trackingMapContainer"
+                                 data-order-id="@activeOrder.Id"
+                                 data-order-number="@activeOrder.OrderNumber"
+                                 data-order-status="@activeOrder.Status"
+                                 data-is-eligible="@(isTrackingEligible ? "true" : "false")"
+                                 data-tracking-type="@(isPickupTracking ? "pickup" : (isDeliveryTracking ? "delivery" : "none"))"
+                                 data-customer-lat="@(activeOrder.PickupLatitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                                 data-customer-lng="@(activeOrder.PickupLongitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                                 data-pickup-loc="@activeOrder.PickupLocation">
+                                <div class="live-tracking-header">
+                                    <div class="live-tracking-title">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                        </svg>
+                                        <span>Live Rider Tracking</span>
+                                        @if (isPickupTracking)
+                                        {
+                                            <span style="font-size:0.75rem; font-weight:600; color:#2563EB; background:#EFF6FF; padding:2px 8px; border-radius:6px; border:1px solid #BFDBFE;">Pickup Leg</span>
+                                        }
+                                        else if (isDeliveryTracking)
+                                        {
+                                            <span style="font-size:0.75rem; font-weight:600; color:#059669; background:#ECFDF5; padding:2px 8px; border-radius:6px; border:1px solid #A7F3D0;">Delivery Leg</span>
+                                        }
+                                    </div>
+                                    <div id="liveTrackingPill" class="live-indicator-pill is-waiting">
+                                        <span class="live-dot"></span>
+                                        <span id="liveTrackingPillText">Connecting...</span>
+                                    </div>
                                 </div>
-
-                                <!-- Step 4: Weighed & Verified -->
-                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.WeightConfirmed ? "completed" : "")">
-                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.WeightConfirmed ? "✓" : "4")</div>
-                                    <h4 class="timeline-title">4. Exact Scale Weighing & Photo Verified</h4>
-                                    <p class="timeline-desc">
-                                        @(activeOrder.WeightKg.HasValue ? $"Verified weight: {activeOrder.WeightKg.Value} kg — Total: ₱{activeOrder.TotalAmount:N2}" : "Awaiting arrival and scale weighing")
-                                    </p>
+                                <div id="customerTrackingMap"></div>
+                                <div class="live-tracking-footer">
+                                    <div class="tracking-status-text" id="liveTrackingStatusMsg">
+                                        Initializing live tracking for order @activeOrder.OrderNumber...
+                                    </div>
+                                    <div class="tracking-legend">
+                                        <div class="tracking-legend-item">
+                                            <span class="tracking-legend-pin customer-pin"></span>
+                                            <span>Your Location</span>
+                                        </div>
+                                        <div class="tracking-legend-item">
+                                            <span class="tracking-legend-pin rider-pin"></span>
+                                            <span>Assigned Rider</span>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <!-- Step 5: Washing Cycle -->
-                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Washing ? "completed" : "")">
-                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Washing ? "✓" : "5")</div>
-                                    <h4 class="timeline-title">5. Washing & Fabric Care</h4>
-                                    <p class="timeline-desc">Deep cleaning using premium eco-friendly detergents and sanitizers.</p>
-                                </div>
-
-                                <!-- Step 6: Drying Cycle -->
-                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Drying ? "completed" : "")">
-                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Drying ? "✓" : "6")</div>
-                                    <h4 class="timeline-title">6. Temperature-Controlled Drying & Folding</h4>
-                                    <p class="timeline-desc">Gentle tumble dry, crisp steam iron (if selected), and neat packaging.</p>
-                                </div>
-
-                                 @{
-                                     var isDelivered = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.Delivered;
-                                     var isOutForDelivery = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.OutForDelivery;
-                                     var deliveryStepClass = isDelivered ? "completed" : isOutForDelivery ? "active" : "";
-                                 }
-                                 <div class="timeline-step @deliveryStepClass">
-                                     <div class="timeline-dot">@(isDelivered ? "✓" : "7")</div>
-                                     <h4 class="timeline-title">7. Out for Delivery & Returned Fresh</h4>
-                                     <div class="timeline-desc">
-                                         @if (isDelivered)
-                                         {
-                                             <div>Delivered successfully to your doorstep.</div>
-                                             @if (activeOrder.DeliveryRider != null)
-                                             {
-                                                 <div>Delivered by @activeOrder.DeliveryRider.FullName.</div>
-                                             }
-                                             @if (activeOrder.DeliveredAt.HasValue)
-                                             {
-                                                 <div>@activeOrder.DeliveredAt.Value.ToLocalTime().ToString("MMMM dd, yyyy hh:mm tt")</div>
-                                             }
-                                             @if (!string.IsNullOrEmpty(activeOrder.DeliveryPhotoPath))
-                                             {
-                                                 <a href="@activeOrder.DeliveryPhotoPath" target="_blank" rel="noopener" style="color:var(--lh-blue-600);font-weight:600;">View proof of delivery</a>
-                                             }
-                                         }
-                                         else if (isOutForDelivery)
-                                         {
-                                             <div>Your laundry is on the way to your doorstep.</div>
-                                             @if (activeOrder.DeliveryRider != null)
-                                             {
-                                                 <div>Delivery rider: @activeOrder.DeliveryRider.FullName@(activeOrder.DeliveryRider.PhoneNumber != null ? $" ({activeOrder.DeliveryRider.PhoneNumber})" : "")</div>
-                                             }
-                                         }
-                                         else if (activeOrder.Status == LaundryHub2._0.Models.OrderStatus.ReadyForDelivery)
-                                         {
-                                             <div>Payment confirmed. Waiting for the shop to assign a delivery rider.</div>
-                                         }
-                                         else
-                                         {
-                                             <div>Delivery will be scheduled after payment is confirmed.</div>
-                                         }
-                                     </div>
-                                 </div>
                             </div>
+
+                            <script type="application/json" id="customer-tracking-order">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+    orderNumber = activeOrder.OrderNumber,
+    status = activeOrder.Status.ToString(),
+    preferredPickupDate = activeOrder.PreferredPickupDate.ToString("yyyy-MM-dd"),
+    preferredPickupTime = activeOrder.PreferredPickupTime,
+    pickupRider = activeOrder.PickupRider != null ? new { name = activeOrder.PickupRider.FullName, phone = activeOrder.PickupRider.PhoneNumber } : null,
+    weightKg = activeOrder.WeightKg,
+    totalAmount = activeOrder.TotalAmount,
+    weightPhotoPath = activeOrder.WeightPhotoPath,
+    requiresWashing = activeOrder.OrderServices.Any(os => os.Service == null || os.Service.RequiresWashing),
+    requiresDrying = activeOrder.OrderServices.Any(os => os.Service == null || os.Service.RequiresDrying),
+    selectedServices = activeOrder.OrderServices.Select(os => os.Service != null ? os.Service.Name : "?").ToList(),
+    deliveryRider = activeOrder.DeliveryRider != null ? new { name = activeOrder.DeliveryRider.FullName, phone = activeOrder.DeliveryRider.PhoneNumber } : null,
+    deliveredAt = JsonUtc(activeOrder.DeliveredAt),
+    deliveryPhotoPath = activeOrder.DeliveryPhotoPath
+}))
+                            </script>
+                            <div data-timeline-surface="journey" data-timeline-orders="customer-tracking-order" data-timeline-index="0" aria-label="Order tracking timeline"></div>
                         </div>
                     </div>
                 }
@@ -1600,6 +2008,33 @@
                     <p>Review invoices, pay securely via PayMongo (GCash, Maya, Debit/Credit Cards), and view receipts.</p>
                 </div>
 
+                <div class="stat-cards-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-card-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        </div>
+                        <div class="stat-card-data">
+                            <span class="stat-card-value">₱@Model.OutstandingBalance.ToString("N2")</span>
+                            <span class="stat-card-label">Outstanding Balance</span>
+                        </div>
+                    </div>
+                    @{
+                        var awaitingWeighCount = Model.Orders.Count(o => !o.IsPaymentConfirmed && !o.TotalAmount.HasValue && o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && !o.IsAbandoned);
+                    }
+                    @if (awaitingWeighCount > 0)
+                    {
+                        <div class="stat-card">
+                            <div class="stat-card-icon yellow">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div class="stat-card-data">
+                                <span class="stat-card-value">@awaitingWeighCount awaiting</span>
+                                <span class="stat-card-label">Orders awaiting shop weighing — amounts appear after weighing, nothing to pay yet</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
                 @{
                     var unpaidOrders = Model.Orders.Where(o => !o.IsPaymentConfirmed && o.TotalAmount.HasValue && o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && !o.IsAbandoned).ToList();
                     var abandonedOrders = Model.Orders.Where(o => o.IsAbandoned).ToList();
@@ -1611,7 +2046,7 @@
                     <div class="alert-banner alert-danger" style="margin-bottom: 20px;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                         <div>
-                            <strong>Notice: You have @abandonedOrders.Count abandoned order(s).</strong> Orders remaining unpaid after 15 days past completion are deemed abandoned per section 4 of our Terms & Conditions.
+                            <strong>Notice: You have @abandonedOrders.Count abandoned order(s).</strong> Orders remaining unpaid after 15 days past completion are deemed abandoned per section 5 of our Terms & Conditions.
                         </div>
                     </div>
                 }
@@ -1631,7 +2066,8 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="loyalty-ledger-table">
                                 <thead>
                                     <tr>
                                         <th>Date</th>
@@ -1641,19 +2077,21 @@
                                         <th>Expires</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="loyalty-ledger-body">
                                     @foreach (var entry in Model.LoyaltyLedger)
                                     {
                                         <tr>
-                                            <td style="font-size: 0.8125rem; white-space: nowrap;">@entry.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                            <td style="font-size: 0.8125rem; white-space: nowrap;">@ManilaTime(entry.CreatedAt).ToString("MMM dd, yyyy")</td>
                                             <td style="font-size: 0.8125rem;">@entry.Type</td>
                                             <td style="font-weight: 700; color: @(entry.Points >= 0 ? "#059669" : "#DC2626");">@(entry.Points >= 0 ? "+" : "")@entry.Points</td>
                                             <td style="font-size: 0.8125rem;">@entry.Reason</td>
-                                            <td style="font-size: 0.8125rem;">@(entry.ExpiresAt.HasValue ? entry.ExpiresAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")</td>
+                                            <td style="font-size: 0.8125rem;">@(entry.ExpiresAt.HasValue ? ManilaTime(entry.ExpiresAt.Value).ToString("MMM dd, yyyy") : "—")</td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="loyalty-ledger-pagination" aria-label="Loyalty ledger pagination"></div>
                         }
                     </div>
                 </div>
@@ -1666,13 +2104,23 @@
                     <div class="content-card-body" style="padding: 0;">
                         @if (unpaidOrders.Count == 0)
                         {
-                            <p style="padding: 30px; text-align: center; color: var(--lh-text-muted);">
-                                All your laundry bills are paid in full! No balance due.
-                            </p>
+                            @if (awaitingWeighCount > 0)
+                            {
+                                <p style="padding: 30px; text-align: center; color: var(--lh-text-muted);">
+                                    No bills due right now — @awaitingWeighCount order(s) still awaiting shop weighing. Amounts appear here after weighing.
+                                </p>
+                            }
+                            else
+                            {
+                                <p style="padding: 30px; text-align: center; color: var(--lh-text-muted);">
+                                    All your laundry bills are paid in full! No balance due.
+                                </p>
+                            }
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="unpaid-orders-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
@@ -1684,7 +2132,7 @@
                                         <th>Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="unpaid-orders-body">
                                     @foreach (var ord in unpaidOrders)
                                     {
                                         var penalty = ord.AccruedPenaltyAmount ?? 0m;
@@ -1694,18 +2142,24 @@
                                         var isOverdue = penalty > 0m;
                                         
                                         string deadlineText = "Awaiting shop notification";
-                                        if (ord.ReadyForDeliveryNotifiedAt.HasValue)
+                                        var deadline = ord.PaymentDeadlineAt ?? (ord.ReadyForDeliveryNotifiedAt.HasValue ? ord.ReadyForDeliveryNotifiedAt.Value.AddHours(24) : (DateTime?)null);
+                                        if (deadline.HasValue)
                                         {
-                                            var deadline = ord.ReadyForDeliveryNotifiedAt.Value.AddHours(24);
+                                            var graceEnd = ord.GracePeriodEndAt ?? deadline.Value.AddHours(72);
                                             var now = DateTime.UtcNow;
-                                            if (now > deadline)
+                                            if (now > graceEnd)
                                             {
-                                                var overdueDays = Math.Floor((now - deadline).TotalDays);
+                                                var overdueDays = Math.Floor((now - graceEnd).TotalDays);
                                                 deadlineText = $"Overdue by {(overdueDays > 0 ? (int)overdueDays + "d" : "hours")}";
+                                            }
+                                            else if (now > deadline.Value)
+                                            {
+                                                var graceHoursLeft = Math.Ceiling((graceEnd - now).TotalHours);
+                                                deadlineText = $"Grace period (~{(int)graceHoursLeft}h left)";
                                             }
                                             else
                                             {
-                                                var hoursLeft = Math.Ceiling((deadline - now).TotalHours);
+                                                var hoursLeft = Math.Ceiling((deadline.Value - now).TotalHours);
                                                 deadlineText = $"Due in ~{(int)hoursLeft} hrs";
                                             }
                                         }
@@ -1746,20 +2200,32 @@
                                                         Pay with PayMongo
                                                     </button>
                                                 </form>
-                                                @if (Model.LoyaltyBalance >= 100)
+                                                @if (loyaltyDiscount > 0m)
                                                 {
-                                                    <form asp-controller="Customer" asp-action="RedeemPoints" method="post" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;">
+                                                    <div style="font-size: 0.75rem; font-weight: 700; color: #059669; margin-top: 8px;">✓ ₱@loyaltyDiscount.ToString("N2") loyalty already applied</div>
+                                                }
+                                                else if (Model.LoyaltyBalance >= 100)
+                                                {
+                                                    <form asp-controller="Customer" asp-action="RedeemPoints" method="post" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="OrderId" value="@ord.Id" />
-                                                        <input type="number" name="Points" class="form-control" style="width: 90px; padding: 6px 8px; font-size: 0.8125rem;" min="100" step="100" max="@Model.LoyaltyBalance" value="100" title="Points (100 pts = ₱10 off)" />
+                                                        <label class="form-label" for="redeem-@ord.Id" style="width: 100%;">Redeem points (100 pts = ₱10 off)</label>
+                                                        <input type="number" id="redeem-@ord.Id" name="Points" class="form-control" style="width: 90px; min-height: 44px; padding: 6px 8px; font-size: 0.8125rem;" min="100" step="100" max="@Model.LoyaltyBalance" value="100" />
                                                         <button type="submit" class="history-tab-btn">Redeem</button>
+                                                        <span style="font-size: 0.75rem; color: var(--lh-text-muted); width: 100%;">You have @Model.LoyaltyBalance pts · earn 1 pt per ₱10 paid · multiples of 100.</span>
                                                     </form>
+                                                }
+                                                else
+                                                {
+                                                    <div style="font-size: 0.75rem; color: var(--lh-text-muted); margin-top: 8px;">Earn 1 pt per ₱10 paid — 100 pts unlocks ₱10 off.</div>
                                                 }
                                             </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="unpaid-orders-pagination" aria-label="Unpaid orders pagination"></div>
                         }
                     </div>
                 </div>
@@ -1776,31 +2242,44 @@
                         }
                         else
                         {
-                            <table class="order-table">
+                                                        <div class="table-scroll">
+<table class="order-table" id="paid-orders-table">
                                 <thead>
                                     <tr>
                                         <th>Order #</th>
                                         <th>Payment Reference</th>
                                         <th>Date Paid</th>
-                                        <th>Amount</th>
+                                        <th>Base</th>
+                                        <th>Penalty</th>
+                                        <th>Discount</th>
+                                        <th>Net Paid</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="paid-orders-body">
                                     @foreach (var ord in paidOrders)
                                     {
+                                        var rBase = ord.TotalAmount ?? 0m;
+                                        var rPenalty = ord.AccruedPenaltyAmount ?? 0m;
+                                        var rDiscount = Model.LoyaltyDiscounts.TryGetValue(ord.Id, out var rd) ? rd : 0m;
+                                        var rNet = Math.Max(0m, rBase + rPenalty - rDiscount);
                                         <tr>
                                             <td style="font-weight: 700;">@ord.OrderNumber</td>
                                             <td style="font-family: monospace; font-size: 0.8125rem; color: var(--lh-text-muted);">
-                                                @(ord.PayMongoPaymentId ?? "PM-REF-" + ord.Id)
+                                                @(ord.PayMongoPaymentId ?? "Manual record: no gateway reference")
                                             </td>
-                                            <td>@(ord.PaymentConfirmedAt?.ToString("MMM dd, yyyy hh:mm tt") ?? ord.CreatedAt.ToString("MMM dd, yyyy"))</td>
-                                            <td style="font-weight: 700; color: #065F46;">₱@ord.TotalAmount?.ToString("N2")</td>
-                                            <td><span class="status-pill status-delivered">Paid (Confirmed)</span></td>
+                                            <td>@(ord.PaymentConfirmedAt.HasValue ? ManilaTime(ord.PaymentConfirmedAt.Value).ToString("MMM dd, yyyy hh:mm tt") : ManilaTime(ord.CreatedAt).ToString("MMM dd, yyyy"))</td>
+                                            <td>₱@rBase.ToString("N2")</td>
+                                            <td>₱@rPenalty.ToString("N2")</td>
+                                            <td style="color: #059669;">−₱@rDiscount.ToString("N2")</td>
+                                            <td style="font-weight: 700; color: #065F46;">₱@rNet.ToString("N2")</td>
+                                            <td><span class="status-pill status-delivered">Paid (Confirmed)</span><div style="margin-top:6px;"><a href="@Url.Action("Receipt", "Customer", new { id = ord.Id })" style="color:var(--lh-blue-600);font-size:0.75rem;font-weight:700;">View Receipt</a></div></td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="paid-orders-pagination" aria-label="Paid orders pagination"></div>
                         }
                     </div>
                 </div>
@@ -1808,9 +2287,166 @@
         </main>
     </div>
 
+    <!-- Shared order timeline (stage derivation + renderer) -->
+    <script src="~/js/order-timeline.js"></script>
+    <script src="~/js/simple-pager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.SimplePager) {
+                SimplePager.paginate('history-pending-body', 'history-pending-pagination', 10);
+                SimplePager.paginate('history-ongoing-body', 'history-ongoing-pagination', 10);
+                SimplePager.paginate('history-completed-body', 'history-completed-pagination', 10);
+                SimplePager.paginate('loyalty-ledger-body', 'loyalty-ledger-pagination', 10);
+                SimplePager.paginate('unpaid-orders-body', 'unpaid-orders-pagination', 10);
+                SimplePager.paginate('paid-orders-body', 'paid-orders-pagination', 10);
+            }
+        });
+    </script>
+
+    <!-- MapLibre GL JS for Customer Map Picker (Phase 2D) -->
+    <script src="~/lib/maplibre-gl/maplibre-gl.js"></script>
+    <script>
+        // Map Settings injected from server configuration
+        const MAP_CONFIG = {
+            tileUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mapSettings.TileUrl)),
+            attribution: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mapSettings.Attribution)),
+            initialLat: @mapSettings.InitialLatitude,
+            initialLng: @mapSettings.InitialLongitude,
+            initialZoom: @mapSettings.InitialZoom
+        };
+
+        let pickupMap = null;
+        let pickupMarker = null;
+
+        function updateCoordinatesDisplay(lat, lng) {
+            const latInput = document.getElementById('pickupLatitude');
+            const lngInput = document.getElementById('pickupLongitude');
+            const coordsText = document.getElementById('coordsDisplayValues');
+
+            if (latInput) latInput.value = lat.toFixed(8);
+            if (lngInput) lngInput.value = lng.toFixed(8);
+            if (coordsText) coordsText.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+        }
+
+        function initCustomerPickupMap() {
+            const mapContainer = document.getElementById('pickupMap');
+            if (!mapContainer || pickupMap) return;
+
+            const latInput = document.getElementById('pickupLatitude');
+            const lngInput = document.getElementById('pickupLongitude');
+
+            const initLat = latInput && latInput.value ? parseFloat(latInput.value) : MAP_CONFIG.initialLat;
+            const initLng = lngInput && lngInput.value ? parseFloat(lngInput.value) : MAP_CONFIG.initialLng;
+
+            try {
+                pickupMap = new maplibregl.Map({
+                    container: 'pickupMap',
+                    style: {
+                        version: 8,
+                        sources: {
+                            'osm-tiles': {
+                                type: 'raster',
+                                tiles: [MAP_CONFIG.tileUrl],
+                                tileSize: 256,
+                                attribution: MAP_CONFIG.attribution
+                            }
+                        },
+                        layers: [
+                            {
+                                id: 'osm-tiles-layer',
+                                type: 'raster',
+                                source: 'osm-tiles',
+                                minzoom: 0,
+                                maxzoom: 19
+                            }
+                        ]
+                    },
+                    center: [initLng, initLat],
+                    zoom: MAP_CONFIG.initialZoom
+                });
+
+                pickupMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+                // Add draggable pickup marker
+                pickupMarker = new maplibregl.Marker({
+                    draggable: true,
+                    color: '#2563EB'
+                })
+                .setLngLat([initLng, initLat])
+                .addTo(pickupMap);
+
+                // Update coordinates when marker dragged
+                pickupMarker.on('dragend', function() {
+                    const lngLat = pickupMarker.getLngLat();
+                    updateCoordinatesDisplay(lngLat.lat, lngLat.lng);
+                    const msgEl = document.getElementById('mapLocationMsg');
+                    if (msgEl) msgEl.textContent = 'Pin adjusted';
+                });
+
+                // Update coordinates when map clicked
+                pickupMap.on('click', function(e) {
+                    pickupMarker.setLngLat([e.lngLat.lng, e.lngLat.lat]);
+                    updateCoordinatesDisplay(e.lngLat.lat, e.lngLat.lng);
+                    const msgEl = document.getElementById('mapLocationMsg');
+                    if (msgEl) msgEl.textContent = 'Pin adjusted';
+                });
+
+                updateCoordinatesDisplay(initLat, initLng);
+            } catch (err) {
+                console.error('Failed to initialize pickup map:', err);
+                const msgEl = document.getElementById('mapLocationMsg');
+                if (msgEl) msgEl.textContent = 'Map preview could not be loaded.';
+            }
+        }
+
+        function useCurrentCustomerLocation() {
+            const btn = document.getElementById('btnUseCurrentLocation');
+            const msgEl = document.getElementById('mapLocationMsg');
+
+            if (!navigator.geolocation) {
+                if (msgEl) msgEl.textContent = 'Geolocation is not supported by your browser.';
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+            if (msgEl) msgEl.textContent = 'Locating...';
+
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    if (btn) btn.disabled = false;
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    if (pickupMap && pickupMarker) {
+                        pickupMap.flyTo({ center: [lng, lat], zoom: 16 });
+                        pickupMarker.setLngLat([lng, lat]);
+                    }
+                    updateCoordinatesDisplay(lat, lng);
+                    if (msgEl) msgEl.textContent = 'Location detected ✓';
+                },
+                function(err) {
+                    if (btn) btn.disabled = false;
+                    let errText = 'Could not get device location.';
+                    if (err.code === 1) errText = 'Location permission was denied. You can manually drag the pin.';
+                    else if (err.code === 2) errText = 'Position unavailable. Please drag the pin manually.';
+                    else if (err.code === 3) errText = 'Location request timed out. Please drag the pin manually.';
+                    if (msgEl) msgEl.textContent = errText;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 5000
+                }
+            );
+        }
+    </script>
+
+    <!-- SignalR Client for Phase 2E Live Rider Tracking -->
+    <script src="~/lib/signalr.min.js"></script>
+
     <!-- Tab Switching Script -->
     <script>
-        function switchTab(tabId) {
+        function switchTab(tabId, orderId) {
             // Hide all panels
             document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
             // Remove active from nav items
@@ -1819,6 +2455,20 @@
             const targetPanel = document.getElementById('panel-' + tabId);
             if (targetPanel) {
                 targetPanel.classList.add('active');
+                if (tabId === 'book') {
+                    if (!pickupMap) {
+                        initCustomerPickupMap();
+                    } else {
+                        setTimeout(() => pickupMap && pickupMap.resize(), 100);
+                    }
+                }
+                if (tabId === 'tracking') {
+                    // Resize live tracking map if already initialized
+                    setTimeout(() => customerTrackingMap && customerTrackingMap.resize(), 100);
+                } else {
+                    // Leaving tracking tab: stop live tracking
+                    stopCustomerTracking();
+                }
             }
 
             // Highlight corresponding sidebar item
@@ -1829,11 +2479,114 @@
                 }
             });
 
-            // Update URL without refresh
+            // Update URL without refresh — preserve book-tab intent and estimate params.
             const url = new URL(window.location);
             url.searchParams.set('tab', tabId);
+            if (orderId) {
+                url.searchParams.set('order', orderId);
+            } else if (tabId !== 'tracking') {
+                url.searchParams.delete('order');
+            }
             window.history.pushState({}, '', url);
         }
+
+        // Deep link to one order's timeline. Full reload so the server renders
+        // exactly that order — Track never shows order A's timeline for order B.
+        // Also stop any active tracking before navigating.
+        function trackOrder(orderId) {
+            stopCustomerTracking();
+            const url = new URL(window.location);
+            url.searchParams.set('tab', 'tracking');
+            url.searchParams.set('order', orderId);
+            window.location.href = url.toString();
+        }
+
+        function isSundayDate(value) {
+            if (!value) return false;
+            const parts = value.split('-');
+            if (parts.length !== 3) return false;
+            const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            return d.getDay() === 0;
+        }
+
+        function validatePickupForm() {
+            const dateEl = document.getElementById('pickupDateInput');
+            const errEl = document.getElementById('err-pickup-date');
+            if (errEl) errEl.textContent = '';
+            if (dateEl && isSundayDate(dateEl.value)) {
+                if (errEl) errEl.textContent = 'Pickups run Monday to Saturday only — the shop is closed on Sundays. Please choose another date.';
+                return false;
+            }
+            return true;
+        }
+
+        function updateBookingEstimate() {
+            const box = document.getElementById('bookingEstimate');
+            const weightEl = document.getElementById('estimateWeightKg');
+            if (!box || !weightEl) return;
+            const checked = Array.from(document.querySelectorAll('input[name="SelectedServiceIds"]:checked'));
+            const weight = parseFloat(weightEl.value);
+            if (!checked.length || isNaN(weight) || weight <= 0) {
+                box.textContent = 'Select services and enter an estimated weight to see an estimate.';
+                return;
+            }
+            const lines = [];
+            let subtotal = 0;
+            checked.forEach(cb => {
+                const rate = parseFloat(cb.getAttribute('data-rate') || '0');
+                const line = rate * weight;
+                subtotal += line;
+                lines.push((cb.getAttribute('data-name') || 'Service') + ': ₱' + rate.toFixed(2) + '/kg × ' + weight + ' kg = ₱' + line.toFixed(2));
+            });
+            const fee = weight < 5 ? 50 : 0;
+            const total = subtotal + fee;
+            let html = lines.map(l => '<div>' + l + '</div>').join('');
+            html += '<div style="margin-top:6px;">Subtotal: <strong>₱' + subtotal.toFixed(2) + '</strong></div>';
+            html += '<div>Delivery fee: <strong>' + (fee > 0 ? '₱50.00 (under 5 kg)' : 'FREE (5 kg+)') + '</strong></div>';
+            html += '<div style="margin-top:4px;font-weight:800;color:var(--lh-text-headings);">Estimated total: ₱' + total.toFixed(2) + '</div>';
+            if (weight < 3) html += '<div style="color:#DC2626;font-weight:600;">Below the 3 kg minimum per pickup.</div>';
+            html += '<div style="font-size:0.75rem;color:var(--lh-text-muted);">Advisory only — final bill follows in-shop scale weighing.</div>';
+            box.innerHTML = html;
+        }
+
+        function prefillBookingFromQuery() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const services = (params.get('services') || '').split(',').map(s => s.trim()).filter(Boolean);
+                if (services.length) {
+                    document.querySelectorAll('input[name="SelectedServiceIds"]').forEach(cb => {
+                        cb.checked = services.includes(cb.value);
+                    });
+                }
+                const weight = params.get('weight');
+                const weightEl = document.getElementById('estimateWeightKg');
+                if (weight && weightEl && !isNaN(parseFloat(weight))) weightEl.value = weight;
+            } catch (e) { /* query prefill is best-effort */ }
+            updateBookingEstimate();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            OrderTimeline.mountAll();
+            document.querySelectorAll('input[name="SelectedServiceIds"]').forEach(cb => {
+                cb.addEventListener('change', updateBookingEstimate);
+            });
+            const weightEl = document.getElementById('estimateWeightKg');
+            if (weightEl) weightEl.addEventListener('input', updateBookingEstimate);
+            const dateEl = document.getElementById('pickupDateInput');
+            if (dateEl) dateEl.addEventListener('change', function () {
+                const errEl = document.getElementById('err-pickup-date');
+                if (errEl) errEl.textContent = isSundayDate(dateEl.value) ? 'Pickups run Monday to Saturday only — the shop is closed on Sundays.' : '';
+            });
+            prefillBookingFromQuery();
+
+            // Initialize MapLibre pickup picker
+            initCustomerPickupMap();
+
+            // Phase 2E: Initialize live tracking if tracking tab is active
+            if (document.getElementById('panel-tracking') && document.getElementById('panel-tracking').classList.contains('active')) {
+                initCustomerLiveTracking();
+            }
+        });
 
         function filterHistoryTab(subtab, btn) {
             document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1845,6 +2598,317 @@
                 target.classList.add('active');
             }
         }
+
+        async function submitSelfClaim(orderId) {
+            const errEl = document.getElementById('err-selfclaim-' + orderId);
+            const okEl = document.getElementById('ok-selfclaim-' + orderId);
+            const typeEl = document.getElementById('selfclaim-type-' + orderId);
+            const descEl = document.getElementById('selfclaim-desc-' + orderId);
+            const formEl = document.getElementById('selfclaim-form-' + orderId);
+            if (!errEl || !typeEl || !descEl || !formEl) return;
+            errEl.textContent = '';
+            if (okEl) okEl.textContent = '';
+            const desc = (descEl.value || '').trim();
+            if (!desc) { errEl.textContent = 'Please describe what happened.'; return; }
+            const tokenEl = formEl.querySelector('input[name="__RequestVerificationToken"]');
+            const body = new URLSearchParams({ OrderId: String(orderId), Type: typeEl.value, Description: desc, __RequestVerificationToken: tokenEl ? tokenEl.value : '' });
+            let data = null;
+            try {
+                const res = await fetch('/Customer/FileClaim', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: body.toString() });
+                data = await res.json();
+            } catch (e) { errEl.textContent = 'Could not file the claim. Please try again.'; return; }
+            if (!data || !data.success) { errEl.textContent = (data && data.message) || 'Filing failed.'; return; }
+            if (okEl) okEl.textContent = data.message;
+            descEl.value = '';
+        }
+    </script>
+
+    <!-- Phase 2E: Customer Live Rider Tracking Controller -->
+    <script>
+        (function () {
+            // ── State ────────────────────────────────────────────────────────────
+            let customerTrackingMap = null;
+            let customerMarker = null;
+            let riderMarker = null;
+            let trackingConnection = null;
+            let isTrackingActive = false;
+            let trackingOrderId = 0;
+
+            // Expose to outer scope for switchTab
+            window.customerTrackingMap = null;
+            window.stopCustomerTracking = stopTracking;
+            window.initCustomerLiveTracking = initTracking;
+
+            // ── Bootstrap ────────────────────────────────────────────────────────
+            function initTracking() {
+                const container = document.getElementById('trackingMapContainer');
+                if (!container) return;
+
+                const isEligible = container.dataset.isEligible === 'true';
+                if (!isEligible) {
+                    setStatus('none', 'Live tracking is not available for this order status.');
+                    setStatusMsg('Live tracking is only active when a rider is en-route to you.');
+                    return;
+                }
+
+                trackingOrderId = parseInt(container.dataset.orderId, 10);
+                const customerLatStr = container.dataset.customerLat;
+                const customerLngStr = container.dataset.customerLng;
+                const customerLat = customerLatStr ? parseFloat(customerLatStr) : MAP_CONFIG.initialLat;
+                const customerLng = customerLngStr ? parseFloat(customerLngStr) : MAP_CONFIG.initialLng;
+                const trackingType = container.dataset.trackingType;
+
+                buildMap(customerLat, customerLng, trackingType);
+                connectSignalR(trackingOrderId, customerLat, customerLng);
+            }
+
+            // ── MapLibre Map ─────────────────────────────────────────────────────
+            function buildMap(customerLat, customerLng, trackingType) {
+                const mapEl = document.getElementById('customerTrackingMap');
+                if (!mapEl || customerTrackingMap) return;
+
+                customerTrackingMap = new maplibregl.Map({
+                    container: 'customerTrackingMap',
+                    style: {
+                        version: 8,
+                        sources: {
+                            'osm': {
+                                type: 'raster',
+                                tiles: [MAP_CONFIG.tileUrl],
+                                tileSize: 256,
+                                attribution: MAP_CONFIG.attribution
+                            }
+                        },
+                        layers: [{
+                            id: 'osm-layer',
+                            type: 'raster',
+                            source: 'osm',
+                            minzoom: 0,
+                            maxzoom: 19
+                        }]
+                    },
+                    center: [customerLng, customerLat],
+                    zoom: 15
+                });
+
+                // Expose so switchTab can call .resize()
+                window.customerTrackingMap = customerTrackingMap;
+
+                customerTrackingMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+                // Customer (pickup location) marker — blue
+                const customerEl = document.createElement('div');
+                customerEl.className = 'customer-map-marker';
+                customerEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+                customerEl.title = trackingType === 'delivery' ? 'Delivery Address' : 'Pickup Address';
+
+                customerMarker = new maplibregl.Marker({ element: customerEl })
+                    .setLngLat([customerLng, customerLat])
+                    .setPopup(new maplibregl.Popup({ offset: 24 }).setText(
+                        trackingType === 'delivery' ? 'Your delivery address' : 'Your pickup location'
+                    ))
+                    .addTo(customerTrackingMap);
+            }
+
+            // ── SignalR ──────────────────────────────────────────────────────────
+            async function connectSignalR(orderId, customerLat, customerLng) {
+                if (trackingConnection) return;
+
+                try {
+                    trackingConnection = new signalR.HubConnectionBuilder()
+                        .withUrl('/orderHub')
+                        .withAutomaticReconnect([2000, 5000, 10000, 30000])
+                        .configureLogging(signalR.LogLevel.Warning)
+                        .build();
+
+                    trackingConnection.on('RiderLocationUpdated', function (payload) {
+                        if (!payload || payload.orderId !== orderId) return;
+                        updateRiderMarker(payload.latitude, payload.longitude, payload.updatedAt);
+                    });
+
+                    trackingConnection.onreconnecting(function () {
+                        setStatus('reconnecting', 'Reconnecting...');
+                        setStatusMsg('Connection lost — attempting to reconnect...');
+                    });
+
+                    trackingConnection.onreconnected(function () {
+                        setStatus('waiting', 'Reconnected');
+                        setStatusMsg('Reconnected — waiting for rider location...');
+                        fetchInitialLocation(orderId, customerLat, customerLng);
+                    });
+
+                    trackingConnection.onclose(function () {
+                        setStatus('reconnecting', 'Disconnected');
+                        setStatusMsg('Connection closed. Reload the page to resume tracking.');
+                    });
+
+                    await trackingConnection.start();
+                    isTrackingActive = true;
+
+                    const joined = await trackingConnection.invoke('JoinOrderGroup', orderId);
+                    if (!joined) {
+                        setStatus('none', 'Not authorized');
+                        setStatusMsg('Could not join tracking group for this order.');
+                        return;
+                    }
+
+                    setStatus('waiting', 'Waiting for rider...');
+                    setStatusMsg('Connected. Waiting for rider GPS signal...');
+
+                    // Fetch initial location in case rider already has coordinates
+                    await fetchInitialLocation(orderId, customerLat, customerLng);
+
+                } catch (err) {
+                    console.error('[LiveTracking] SignalR error:', err);
+                    setStatus('reconnecting', 'Connection failed');
+                    setStatusMsg('Could not connect to the tracking server. Please refresh.');
+                }
+            }
+
+            async function fetchInitialLocation(orderId, customerLat, customerLng) {
+                try {
+                    const res = await fetch('/Customer/GetRiderLocation?orderId=' + orderId, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (data && data.isTrackingActive && data.hasLocation) {
+                        updateRiderMarker(data.latitude, data.longitude, data.updatedAt, data.isStale);
+                    } else if (data && !data.isTrackingActive) {
+                        setStatus('none', 'Tracking ended');
+                        setStatusMsg(data.message || 'This order is no longer in an active tracking window.');
+                    }
+                } catch (err) {
+                    // Best-effort; SignalR will push updates anyway
+                }
+            }
+
+            // ── Rider Marker ─────────────────────────────────────────────────────
+            function updateRiderMarker(lat, lng, updatedAtIso, forceStale) {
+                if (!customerTrackingMap) return;
+
+                const isStale = forceStale != null
+                    ? forceStale
+                    : (updatedAtIso ? (Date.now() - new Date(updatedAtIso).getTime()) > 120000 : false);
+
+                if (!riderMarker) {
+                    const riderEl = document.createElement('div');
+                    riderEl.className = 'rider-map-marker';
+                    riderEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v5"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/><polyline points="17 12 13 12 13 8"/></svg>';
+                    riderEl.title = 'Your assigned rider';
+
+                    riderMarker = new maplibregl.Marker({ element: riderEl })
+                        .setLngLat([lng, lat])
+                        .setPopup(new maplibregl.Popup({ offset: 26 }).setText('Your rider'))
+                        .addTo(customerTrackingMap);
+                } else {
+                    riderMarker.setLngLat([lng, lat]);
+                }
+
+                if (isStale) {
+                    setStatus('stale', 'Signal stale');
+                    setStatusMsg('Last known rider location (signal stale — over 2 minutes old).');
+                } else {
+                    setStatus('live', 'Live');
+                    const d = updatedAtIso ? new Date(updatedAtIso) : new Date();
+                    setStatusMsg('Rider location live · Updated ' + formatTime(d));
+                }
+
+                // Fit map bounds to show both markers
+                const bounds = new maplibregl.LngLatBounds();
+                if (customerMarker) bounds.extend(customerMarker.getLngLat());
+                bounds.extend([lng, lat]);
+                if (!bounds.isEmpty()) {
+                    customerTrackingMap.fitBounds(bounds, { padding: 80, maxZoom: 17, duration: 600 });
+                }
+            }
+
+            // ── Status helpers ────────────────────────────────────────────────────
+            function setStatus(type, label) {
+                const pill = document.getElementById('liveTrackingPill');
+                const text = document.getElementById('liveTrackingPillText');
+                if (!pill || !text) return;
+                pill.className = 'live-indicator-pill';
+                if (type === 'live') pill.classList.add('is-live');
+                else if (type === 'stale') pill.classList.add('is-stale');
+                else if (type === 'waiting') pill.classList.add('is-waiting');
+                else if (type === 'reconnecting') pill.classList.add('is-reconnecting');
+                text.textContent = label;
+            }
+
+            function setStatusMsg(msg) {
+                const el = document.getElementById('liveTrackingStatusMsg');
+                if (el) el.textContent = msg;
+            }
+
+            function formatTime(d) {
+                if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+
+            // ── Cleanup ───────────────────────────────────────────────────────────
+            function stopTracking() {
+                if (trackingConnection) {
+                    try {
+                        trackingConnection.invoke('LeaveOrderGroup', trackingOrderId).catch(() => {});
+                        trackingConnection.stop().catch(() => {});
+                    } catch (_) {}
+                    trackingConnection = null;
+                }
+                isTrackingActive = false;
+            }
+
+            window.addEventListener('beforeunload', stopTracking);
+        })();
+    </script>
+
+    <script>
+        /* Shared responsive contract: reveals condensed columns (<=1024px / <=640px) per row. */
+        (function () {
+            var CHEVRON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+            function enhanceTable(table) {
+                if (!table.tHead || !table.tHead.rows[0] || !table.tBodies[0]) return;
+                if (table.tHead.rows[0].cells.length < 4) return;
+                var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+                rows.forEach(function (row) {
+                    if (row.querySelector('.row-toggle')) return;
+                    var cell = row.cells[0];
+                    if (!cell) return;
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'row-toggle';
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.setAttribute('aria-label', 'Show all columns for this row');
+                    btn.innerHTML = CHEVRON;
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        var open = row.classList.toggle('row-expanded');
+                        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    });
+                    cell.insertBefore(btn, cell.firstChild);
+                });
+            }
+
+            function enhance() {
+                var tables = document.querySelectorAll('.table-scroll table');
+                Array.prototype.forEach.call(tables, enhanceTable);
+            }
+
+            window.lhEnhanceResponsiveTables = enhance;
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', enhance);
+            } else {
+                enhance();
+            }
+
+            /* Covers server- and JS-rendered rows (tabs, modals, async panels). */
+            if (window.MutationObserver) {
+                new MutationObserver(function () { enhance(); }).observe(document.body, { childList: true, subtree: true });
+            }
+        })();
     </script>
 </body>
 </html>

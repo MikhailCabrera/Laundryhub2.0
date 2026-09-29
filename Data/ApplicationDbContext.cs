@@ -34,6 +34,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             b.Property(u => u.Id).HasMaxLength(85);
             b.Property(u => u.NormalizedUserName).HasMaxLength(85);
             b.Property(u => u.NormalizedEmail).HasMaxLength(85);
+            b.Property(u => u.CurrentLatitude).HasColumnType("decimal(10,8)");
+            b.Property(u => u.CurrentLongitude).HasColumnType("decimal(11,8)");
         });
 
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>(b =>
@@ -69,6 +71,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             b.HasIndex(o => o.OrderNumber).IsUnique();
             b.Property(o => o.CustomerId).HasMaxLength(85).IsRequired();
             b.Property(o => o.PickupLocation).HasMaxLength(500);
+            b.Property(o => o.PickupLatitude).HasColumnType("decimal(10,8)");
+            b.Property(o => o.PickupLongitude).HasColumnType("decimal(11,8)");
             b.Property(o => o.ContactNumber).HasMaxLength(30);
             b.Property(o => o.SpecialInstructions).HasMaxLength(1000);
             b.Property(o => o.PreferredPickupTime).HasMaxLength(50);
@@ -196,7 +200,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             b.HasOne(n => n.Order)
              .WithMany()
              .HasForeignKey(n => n.OrderId)
-             .OnDelete(DeleteBehavior.Restrict);
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
         });
 
         builder.Entity<CustomerNote>(b =>

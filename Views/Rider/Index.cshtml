@@ -31,6 +31,15 @@
         if (string.IsNullOrEmpty(n)) return "?";
         return string.Concat(n.Split(' ').Take(2).Where(p => p.Length > 0).Select(p => char.ToUpper(p[0])));
     }
+    string? JsonUtc(DateTime? value) => value == null ? null : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc).ToString("o");
+
+    // Phase 2C: Determine active tracking job eligibility
+    var eligibleJob = Model.ActiveJobs.FirstOrDefault(o =>
+        (o.PickupRiderId == Model.Rider.Id && (o.Status == OrderStatus.RiderAssigned || o.Status == OrderStatus.PickedUp || o.Status == OrderStatus.InTransitToShop)) ||
+        (o.DeliveryRiderId == Model.Rider.Id && (o.Status == OrderStatus.ReadyForDelivery || o.Status == OrderStatus.OutForDelivery || o.Status == OrderStatus.DeliveryAttemptFailed)));
+    var hasEligibleJob = eligibleJob != null;
+    var eligibleOrderId = eligibleJob?.Id ?? 0;
+    var eligibleOrderNum = eligibleJob?.OrderNumber ?? "";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -42,24 +51,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
         :root {
-            --lh-navy-950:#071324;--lh-navy-900:#0B1E36;--lh-navy-800:#102A4C;--lh-navy-700:#163865;
-            --lh-blue-600:#1D4ED8;--lh-blue-500:#1E60D5;--lh-blue-400:#3B82F6;--lh-blue-300:#60A5FA;
-            --lh-blue-200:#93C5FD;--lh-blue-100:#BFDBFE;--lh-blue-50:#EBF3FE;--lh-blue-25:#F4F8FE;--lh-blue-10:#F8FAFD;
-            --lh-white:#FFFFFF;--lh-text-headings:#0B1E36;--lh-text-body:#334E68;--lh-text-muted:#627D98;
-            --lh-border-light:#D8E6F8;--lh-border-subtle:#E2EDFA;--lh-border-focus:#1E60D5;
-            --lh-font-heading:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            --lh-font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            --lh-shadow-sm:0 2px 6px rgba(16,42,76,0.04);--lh-shadow-md:0 8px 24px rgba(16,42,76,0.08);
-            --lh-shadow-lg:0 16px 36px rgba(16,42,76,0.12);--lh-shadow-xl:0 24px 50px rgba(16,42,76,0.16);
-            --lh-transition:all 0.22s cubic-bezier(0.16,1,0.3,1);
-            --lh-radius-sm:6px;--lh-radius-md:10px;--lh-radius-lg:16px;--lh-radius-xl:24px;
             --sidebar-w:280px;
-            --c-success:#10B981;--c-success-bg:#ECFDF5;--c-success-border:#A7F3D0;
-            --c-warning:#F59E0B;--c-warning-bg:#FFFBEB;--c-warning-border:#FDE68A;
-            --c-danger:#EF4444;--c-danger-bg:#FEF2F2;--c-danger-border:#FECACA;
+            --c-success:var(--lh-accent-jade);--c-success-bg:var(--lh-accent-mint);--c-success-border:var(--lh-accent-alabaster);
+            --c-warning:var(--lh-accent-honey);--c-warning-bg:var(--lh-accent-cream);--c-warning-border:var(--lh-accent-sand);
+            --c-danger:var(--lh-accent-red);--c-danger-bg:var(--lh-accent-blush);--c-danger-border:var(--lh-accent-rose);
         }
+        /* Token-consolidation guard: ~/css/site.css is linked above for the canonical
+           token block. Its element selectors (p, a, body -moz smoothing) would otherwise
+           apply where this page previously relied on browser defaults, so pre-link
+           rendering is restored here. No pixel changes by construction. */
+        .rider-shell p{margin:1em 0;}
+        .rider-shell a.btn{text-decoration:underline;}
+        .rider-shell a[href^="tel:"]:hover{color:var(--lh-blue-600);}
+        body{-moz-osx-font-smoothing:auto;}
         *,*::before,*::after{box-sizing:border-box;}
         html{font-size:16px;scroll-behavior:smooth;margin:0;padding:0;height:100%;background:var(--lh-blue-10);}
         body{margin:0;padding:0;min-height:100vh;font-family:var(--lh-font-body);font-size:1rem;line-height:1.6;color:var(--lh-text-body);background:var(--lh-blue-10);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
@@ -74,21 +81,21 @@
         .rider-sidebar::-webkit-scrollbar-thumb{background:var(--lh-navy-700);border-radius:4px;}
         .sb-brand{display:flex;align-items:center;gap:12px;padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07);}
         .sb-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--lh-blue-500),var(--lh-blue-400));border-radius:var(--lh-radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(30,96,213,0.35);}
-        .sb-logo svg{color:#fff;}
+        .sb-logo svg{color:var(--lh-white);}
         .sb-brand-text{display:flex;flex-direction:column;gap:1px;}
-        .sb-wordmark{font-family:var(--lh-font-heading);font-size:0.9rem;font-weight:700;color:#fff;line-height:1.2;}
-        .sb-badge{display:inline-flex;align-items:center;padding:2px 8px;background:rgba(249,115,22,0.2);border:1px solid rgba(249,115,22,0.4);border-radius:20px;font-size:0.6875rem;font-weight:600;color:#FB923C;letter-spacing:0.04em;text-transform:uppercase;}
+        .sb-wordmark{font-family:var(--lh-font-heading);font-size:0.9rem;font-weight:700;color:var(--lh-white);line-height:1.2;}
+        .sb-badge{display:inline-flex;align-items:center;padding:2px 8px;background:rgba(249,115,22,0.2);border:1px solid rgba(249,115,22,0.4);border-radius:20px;font-size:0.6875rem;font-weight:600;color:var(--lh-accent-orange);letter-spacing:0.04em;text-transform:uppercase;}
         .sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
         .sb-nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px 11px 14px;border-radius:var(--lh-radius-md);color:rgba(255,255,255,0.6);font-size:0.9rem;font-weight:500;transition:var(--lh-transition);border:none;border-left:3px solid transparent;background:none;width:100%;text-align:left;cursor:pointer;}
         .sb-nav-item .nav-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);transition:var(--lh-transition);}
         .sb-nav-item:hover{background:rgba(59,130,246,0.1);color:rgba(255,255,255,0.9);border-left-color:rgba(96,165,250,0.5);}
         .sb-nav-item:hover .nav-icon{color:var(--lh-blue-300);}
-        .sb-nav-item.active{background:rgba(59,130,246,0.16);color:#fff;border-left-color:var(--lh-blue-400);}
+        .sb-nav-item.active{background:rgba(59,130,246,0.16);color:var(--lh-white);border-left-color:var(--lh-blue-400);}
         .sb-nav-item.active .nav-icon{color:var(--lh-blue-300);}
-        .sb-job-count{margin-left:auto;background:#EF4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.6875rem;font-weight:700;}
+        .sb-job-count{margin-left:auto;background:var(--lh-accent-red);color:var(--lh-white);border-radius:10px;padding:1px 7px;font-size:0.6875rem;font-weight:700;}
         .sb-footer{padding:14px 10px 18px;border-top:1px solid rgba(255,255,255,0.07);}
         .sb-footer-info{display:flex;align-items:center;gap:10px;padding:8px 10px;}
-        .sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#F97316,#EA580C);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;}
+        .sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--lh-accent-ember),var(--lh-accent-ember-dark));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:var(--lh-white);flex-shrink:0;}
         .sb-meta{display:flex;flex-direction:column;gap:1px;overflow:hidden;}
         .sb-name{font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .sb-role{font-size:0.7rem;color:rgba(255,255,255,0.38);}
@@ -102,12 +109,12 @@
         .panel-subtitle{font-size:0.875rem;color:var(--lh-text-muted);margin:4px 0 0;}
 
         /* ── Cards ── */
-        .card{background:#fff;border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;}
+        .card{background:var(--lh-white);border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;}
         .card-body{padding:24px;}
 
         /* ── Job Cards ── */
         .jobs-grid{display:flex;flex-direction:column;gap:16px;}
-        .job-card{background:#fff;border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;transition:var(--lh-transition);}
+        .job-card{background:var(--lh-white);border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;transition:var(--lh-transition);}
         .job-card:hover{box-shadow:var(--lh-shadow-md);transform:translateY(-1px);}
         .job-card-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px 14px;border-bottom:1px solid var(--lh-border-subtle);gap:12px;flex-wrap:wrap;}
         .job-order-num{font-family:var(--lh-font-heading);font-size:1rem;font-weight:700;color:var(--lh-blue-600);}
@@ -119,25 +126,27 @@
         .job-services{font-size:0.8125rem;color:var(--lh-text-muted);margin-bottom:16px;}
         .job-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 
-        /* ── Status badges (rider context) ── */
-        .rb{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:0.03em;white-space:nowrap;}
-        .rb::before{content:"";width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-        .rb-assigned{background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE;}.rb-assigned::before{background:#6366F1;}
-        .rb-pickedup{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}.rb-pickedup::before{background:#F97316;}
-        .rb-transit{background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;}.rb-transit::before{background:#F59E0B;}
-        .rb-weighing{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;}.rb-weighing::before{background:#10B981;}
-        .rb-ready{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}.rb-ready::before{background:#3B82F6;}
-        .rb-delivery{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}.rb-delivery::before{background:#F97316;}
-        .rb-complete{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;}.rb-complete::before{background:#10B981;}
-        .rb-done{background:#F9FAFB;color:#6B7280;border:1px solid #E5E7EB;}.rb-done::before{background:#9CA3AF;}
+        /* ── Status badges (rider context) ──
+           Outdoor legibility: 0.75rem / 700 with an 8px dot so the state
+           reads at arm's length in daylight. */
+        .rb{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:0.03em;white-space:nowrap;}
+        .rb::before{content:"";width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+        .rb-assigned{background:var(--lh-accent-peri);color:var(--lh-accent-iris);border:1px solid var(--lh-accent-lavender);}.rb-assigned::before{background:var(--lh-accent-cornflower);}
+        .rb-pickedup{background:var(--lh-accent-peach);color:var(--lh-accent-clay);border:1px solid var(--lh-accent-apricot);}.rb-pickedup::before{background:var(--lh-accent-ember);}
+        .rb-transit{background:var(--lh-accent-cream);color:var(--lh-accent-bronze);border:1px solid var(--lh-accent-sand);}.rb-transit::before{background:var(--lh-accent-honey);}
+        .rb-weighing{background:var(--lh-accent-mint);color:var(--lh-accent-pine);border:1px solid var(--lh-accent-alabaster);}.rb-weighing::before{background:var(--lh-accent-jade);}
+        .rb-ready{background:var(--lh-accent-frost);color:var(--lh-blue-600);border:1px solid var(--lh-blue-100);}.rb-ready::before{background:var(--lh-blue-400);}
+        .rb-delivery{background:var(--lh-accent-peach);color:var(--lh-accent-clay);border:1px solid var(--lh-accent-apricot);}.rb-delivery::before{background:var(--lh-accent-ember);}
+        .rb-complete{background:var(--lh-accent-mint);color:var(--lh-accent-pine);border:1px solid var(--lh-accent-alabaster);}.rb-complete::before{background:var(--lh-accent-jade);}
+        .rb-done{background:var(--lh-accent-ash);color:var(--lh-accent-slate);border:1px solid var(--lh-accent-stone);}.rb-done::before{background:var(--lh-accent-smoke);}
 
         /* ── Buttons ── */
         .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--lh-radius-md);font-family:var(--lh-font-body);font-size:0.8125rem;font-weight:600;cursor:pointer;border:none;transition:var(--lh-transition);line-height:1.4;white-space:nowrap;}
-        .btn-primary{background:linear-gradient(135deg,var(--lh-blue-600),var(--lh-blue-400));color:#fff;box-shadow:0 2px 8px rgba(30,96,213,0.25);}
+        .btn-primary{background:linear-gradient(135deg,var(--lh-blue-600),var(--lh-blue-400));color:var(--lh-white);box-shadow:0 2px 8px rgba(30,96,213,0.25);}
         .btn-primary:hover{box-shadow:0 4px 14px rgba(30,96,213,0.4);transform:translateY(-1px);}
-        .btn-orange{background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;box-shadow:0 2px 8px rgba(234,88,12,0.25);}
+        .btn-orange{background:linear-gradient(135deg,var(--lh-accent-ember-dark),var(--lh-accent-ember));color:var(--lh-white);box-shadow:0 2px 8px rgba(234,88,12,0.25);}
         .btn-orange:hover{box-shadow:0 4px 14px rgba(234,88,12,0.4);transform:translateY(-1px);}
-        .btn-success{background:linear-gradient(135deg,#059669,#10B981);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,0.25);}
+        .btn-success{background:linear-gradient(135deg,var(--lh-accent-jade-dark),var(--lh-accent-jade));color:var(--lh-white);box-shadow:0 2px 8px rgba(5,150,105,0.25);}
         .btn-success:hover{box-shadow:0 4px 14px rgba(5,150,105,0.4);transform:translateY(-1px);}
         .btn-ghost{background:transparent;color:var(--lh-text-muted);border:1px solid var(--lh-border-light);}
         .btn-ghost:hover{background:var(--lh-blue-50);color:var(--lh-blue-600);border-color:var(--lh-blue-200);}
@@ -145,15 +154,15 @@
 
         /* ── Stat Cards ── */
         .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
-        .stat-card{background:#fff;border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-lg);padding:20px 24px;box-shadow:var(--lh-shadow-sm);display:flex;flex-direction:column;gap:4px;}
+        .stat-card{background:var(--lh-white);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-lg);padding:20px 24px;box-shadow:var(--lh-shadow-sm);display:flex;flex-direction:column;gap:4px;}
         .stat-label{font-size:0.75rem;font-weight:600;color:var(--lh-text-muted);text-transform:uppercase;letter-spacing:0.06em;}
         .stat-value{font-family:var(--lh-font-heading);font-size:2rem;font-weight:800;color:var(--lh-text-headings);}
         .stat-sub{font-size:0.75rem;color:var(--lh-text-muted);}
 
         /* ── Alert ── */
         .alert{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:var(--lh-radius-md);font-size:0.875rem;font-weight:500;}
-        .alert-success{background:var(--c-success-bg);color:#065F46;border:1px solid var(--c-success-border);}
-        .alert-error{background:var(--c-danger-bg);color:#B91C1C;border:1px solid var(--c-danger-border);}
+        .alert-success{background:var(--c-success-bg);color:var(--lh-accent-pine);border:1px solid var(--c-success-border);}
+        .alert-error{background:var(--c-danger-bg);color:var(--lh-accent-crimson);border:1px solid var(--c-danger-border);}
 
         /* ── Empty state ── */
         .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;text-align:center;color:var(--lh-text-muted);}
@@ -170,7 +179,7 @@
         /* ── Modal ── */
         .modal-overlay{position:fixed;inset:0;background:rgba(7,19,36,0.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.22s ease;}
         .modal-overlay.open{opacity:1;pointer-events:all;}
-        .modal{background:#fff;border-radius:var(--lh-radius-xl);box-shadow:var(--lh-shadow-xl);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;transform:translateY(16px) scale(0.97);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);}
+        .modal{background:var(--lh-white);border-radius:var(--lh-radius-xl);box-shadow:var(--lh-shadow-xl);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;transform:translateY(16px) scale(0.97);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);}
         .modal-overlay.open .modal{transform:translateY(0) scale(1);}
         .modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 18px;border-bottom:1px solid var(--lh-border-subtle);}
         .modal-title{font-family:var(--lh-font-heading);font-size:1.1rem;font-weight:700;color:var(--lh-text-headings);margin:0;}
@@ -192,11 +201,97 @@
         /* ── Dashboard info card ── */
         .rider-welcome{background:linear-gradient(135deg,var(--lh-navy-900) 0%,var(--lh-navy-700) 100%);border-radius:var(--lh-radius-lg);padding:28px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
         .rider-welcome-text{flex:1;min-width:0;}
-        .rider-welcome-name{font-family:var(--lh-font-heading);font-size:1.5rem;font-weight:800;color:#fff;margin:0 0 4px;}
+        .rider-welcome-name{font-family:var(--lh-font-heading);font-size:1.5rem;font-weight:800;color:var(--lh-white);margin:0 0 4px;}
         .rider-welcome-sub{font-size:0.875rem;color:rgba(255,255,255,0.6);margin:0;}
         .rider-welcome-badge{background:rgba(249,115,22,0.2);border:1px solid rgba(249,115,22,0.4);border-radius:var(--lh-radius-md);padding:14px 20px;text-align:center;flex-shrink:0;}
-        .rider-welcome-badge-num{font-family:var(--lh-font-heading);font-size:2.5rem;font-weight:800;color:#FB923C;line-height:1;}
+        .rider-welcome-badge-num{font-family:var(--lh-font-heading);font-size:2.5rem;font-weight:800;color:var(--lh-accent-orange);line-height:1;}
         .rider-welcome-badge-label{font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:2px;}
+
+        /* ── Rider notifications (customer bell/panel pattern, adapted IDs) ── */
+        .rider-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--lh-blue-50);color:var(--lh-blue-600);text-decoration:none;flex-shrink:0;}
+        .rider-bell-badge{position:absolute;top:-4px;right:-4px;background:#EF4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.6875rem;font-weight:700;}
+        .rider-note{padding:14px 24px;border-bottom:1px solid var(--lh-border-subtle);}
+        .rider-note:last-child{border-bottom:none;}
+        .rider-note.unread{background:var(--lh-blue-25);}
+
+        /* ── Outdoor contrast pass ──
+           Sidebar text was 0.38–0.6 white and unreadable in glare. Raised to
+           >=0.7 white for labels, icons, and job counts. */
+        .sb-nav-item{color:rgba(255,255,255,0.78);}
+        .sb-nav-item .nav-icon{color:rgba(255,255,255,0.7);}
+        .sb-nav-item.active{color:var(--lh-white);}
+        .sb-nav-item:hover{color:var(--lh-white);}
+        .sb-name{color:rgba(255,255,255,0.92);}
+        .sb-role{color:rgba(255,255,255,0.7);}
+        .sb-wordmark{color:var(--lh-white);}
+        .rider-welcome-sub{color:rgba(255,255,255,0.78);}
+        .rider-welcome-badge-label{color:rgba(255,255,255,0.72);}
+        .sb-footer .btn-ghost{color:rgba(255,255,255,0.8);}
+        .job-info-label{color:var(--lh-text-body);}
+
+        /* ── Bottom navigation (<=768px) ── */
+        .rider-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:900;background:var(--lh-navy-900);border-top:1px solid rgba(255,255,255,0.1);box-shadow:0 -4px 20px rgba(7,19,36,0.25);padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:none;align-items:stretch;justify-content:space-around;gap:4px;}
+        .rbn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:44px;padding:8px 4px;border:none;background:none;border-radius:var(--lh-radius-md);color:rgba(255,255,255,0.72);font-size:0.75rem;font-weight:600;font-family:var(--lh-font-body);cursor:pointer;transition:var(--lh-transition);}
+        .rbn-item .nav-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.7);}
+        .rbn-item:hover{color:var(--lh-white);}
+        .rbn-item.active{background:rgba(59,130,246,0.16);color:var(--lh-white);}
+        .rbn-item.active .nav-icon{color:var(--lh-blue-300);}
+        .rbn-item .rbn-count{background:var(--lh-accent-red);color:var(--lh-white);border-radius:10px;padding:0 6px;font-size:0.6875rem;font-weight:700;}
+
+        /* ── Breakpoints ── */
+        @@media (max-width:1024px){
+            .rider-main{padding:28px 24px;}
+        }
+        /* Sidebar hidden, bottom nav shown */
+        @@media (max-width:768px){
+            .rider-sidebar{display:none;}
+            .rider-main{margin-left:0;padding:20px 16px 96px;}
+            .rider-bottom-nav{display:flex;}
+            .panel-title{font-size:1.375rem;}
+            .job-card-header,.job-card-body{padding-left:16px;padding-right:16px;}
+            .rider-note{padding:14px 16px;}
+            .card-body{padding:16px;}
+            .rider-welcome{padding:22px 20px;}
+            .rider-welcome-name{font-size:1.25rem;}
+            .rider-welcome-badge{padding:12px 16px;}
+            .rider-welcome-badge-num{font-size:2rem;}
+            .job-actions{gap:10px;}
+            .job-actions .btn{flex:1;justify-content:center;}
+            .modal{max-height:88vh;}
+            .modal-body,.modal-header{padding-left:18px;padding-right:18px;}
+        }
+        @@media (max-width:420px){
+            .rider-main{padding:16px 12px 96px;}
+            .stats-row{grid-template-columns:1fr;}
+            .job-info-grid{grid-template-columns:1fr;}
+            .stat-card{padding:16px 18px;}
+            .rbn-item{font-size:0.6875rem;}
+            .modal-footer{flex-direction:column-reverse;}
+            .modal-footer .btn{width:100%;justify-content:center;min-height:44px;}
+        }
+
+        /* ── Rider GPS tracking banner / controls (Phase 2C) ── */
+        .rider-gps-card{background:var(--lh-white);border-radius:var(--lh-card-radius);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
+        .rider-gps-info{display:flex;align-items:center;gap:12px;min-width:0;}
+        .rider-gps-icon-wrap{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--lh-transition);}
+        .gps-state-off .rider-gps-icon-wrap{background:var(--lh-slate-100);color:var(--lh-slate-500);}
+        .gps-state-active .rider-gps-icon-wrap{background:var(--lh-accent-mint);color:var(--lh-accent-jade);animation:pulse-gps 2s infinite;}
+        .gps-state-error .rider-gps-icon-wrap{background:var(--lh-accent-blush);color:var(--lh-accent-red);}
+        .gps-state-disabled .rider-gps-icon-wrap{background:var(--lh-blue-25);color:var(--lh-text-muted);}
+        @@keyframes pulse-gps{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.4);}70%{box-shadow:0 0 0 10px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+        .rider-gps-text{display:flex;flex-direction:column;gap:2px;}
+        .rider-gps-status{font-size:0.9375rem;font-weight:700;color:var(--lh-text-headings);display:flex;align-items:center;gap:8px;}
+        .rider-gps-sub{font-size:0.8125rem;color:var(--lh-text-muted);}
+        .gps-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+        .gps-dot.dot-off{background:#94A3B8;}
+        .gps-dot.dot-active{background:#10B981;}
+        .gps-dot.dot-error{background:#EF4444;}
+        .gps-dot.dot-disabled{background:#CBD5E1;}
+        .rider-gps-actions{display:flex;align-items:center;gap:10px;}
+        .btn-gps-start{background:linear-gradient(135deg,var(--lh-blue-600),var(--lh-blue-500));color:var(--lh-white);border:none;}
+        .btn-gps-start:hover{box-shadow:0 4px 14px rgba(30,96,213,0.35);transform:translateY(-1px);}
+        .btn-gps-stop{background:var(--c-danger-bg);color:var(--c-danger);border:1px solid var(--c-danger-border);}
+        .btn-gps-stop:hover{background:var(--c-danger);color:var(--lh-white);}
     </style>
 </head>
 <body>
@@ -284,6 +379,44 @@
             </div>
         }
 
+        <!-- ══ RIDER GPS TRACKING STATUS & CONTROLS (Phase 2C) ══ -->
+        <div class="rider-gps-card @(hasEligibleJob ? "gps-state-off" : "gps-state-disabled")" id="rider-gps-card" data-has-eligible="@(hasEligibleJob ? "true" : "false")" data-order-id="@eligibleOrderId" data-order-num="@eligibleOrderNum">
+            <div class="rider-gps-info">
+                <div class="rider-gps-icon-wrap" id="rider-gps-icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                </div>
+                <div class="rider-gps-text">
+                    <div class="rider-gps-status" id="rider-gps-status">
+                        <span class="gps-dot @(hasEligibleJob ? "dot-off" : "dot-disabled")" id="rider-gps-dot"></span>
+                        <span id="rider-gps-status-text">@(hasEligibleJob ? "GPS Tracking Off" : "No Active Tracking Order")</span>
+                    </div>
+                    <div class="rider-gps-sub" id="rider-gps-sub">
+                        @if (hasEligibleJob) {
+                            <span>Ready to track order <strong style="color:var(--lh-text-headings);">@eligibleOrderNum</strong></span>
+                        } else {
+                            <span>GPS tracking is only active during pickup or out-for-delivery trips</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="rider-gps-actions">
+                @if (hasEligibleJob) {
+                    <button type="button" class="btn btn-gps-start btn-sm" id="btn-toggle-gps" onclick="toggleRiderGps()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Start GPS
+                    </button>
+                } else {
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-toggle-gps" disabled style="opacity:0.6;cursor:not-allowed;">
+                        No Active Order
+                    </button>
+                }
+            </div>
+        </div>
+
         <!-- ══ DASHBOARD PANEL ══ -->
         <div class="panel @(activeTab == "dashboard" ? "active" : "")" id="panel-dashboard">
             <div class="panel-header">
@@ -291,12 +424,18 @@
                     <h1 class="panel-title">Dashboard</h1>
                     <p class="panel-subtitle">Your pickup and delivery performance at a glance.</p>
                 </div>
+                <a href="#rider-notifications-card" class="rider-bell" aria-label="Notifications">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    @if (Model.UnreadNotificationsCount > 0) {
+                        <span class="rider-bell-badge">@Model.UnreadNotificationsCount</span>
+                    }
+                </a>
             </div>
 
             <div class="rider-welcome">
                 <div class="rider-welcome-text">
                     <p class="rider-welcome-name">Hey, @(Model.Rider.FullName?.Split(' ').FirstOrDefault() ?? "Rider")! 👋</p>
-                    <p class="rider-welcome-sub">You have <strong style="color:#FB923C;">@Model.ActiveJobs.Count active job@(Model.ActiveJobs.Count == 1 ? "" : "s")</strong> waiting for action.</p>
+                    <p class="rider-welcome-sub">You have <strong style="color:var(--lh-accent-orange);">@Model.ActiveJobs.Count active job@(Model.ActiveJobs.Count == 1 ? "" : "s")</strong> waiting for action.</p>
                 </div>
                 <div class="rider-welcome-badge">
                     <div class="rider-welcome-badge-num">@Model.ActiveJobs.Count</div>
@@ -307,7 +446,7 @@
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-label">Active Jobs</div>
-                    <div class="stat-value" style="color:#F97316">@Model.ActiveJobs.Count</div>
+                    <div class="stat-value" style="color:var(--lh-accent-ember)">@Model.ActiveJobs.Count</div>
                     <div class="stat-sub">Assigned + In progress</div>
                 </div>
                 <div class="stat-card">
@@ -319,6 +458,47 @@
                     <div class="stat-label">Completed Jobs</div>
                     <div class="stat-value" style="color:#10B981">@Model.TotalPickupsCompleted</div>
                     <div class="stat-sub">Pickup or delivery</div>
+                </div>
+            </div>
+
+            <div class="job-card" id="rider-notifications-card">
+                <div class="job-card-header">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="job-order-num">Notifications</span>
+                        @if (Model.UnreadNotificationsCount > 0) {
+                            <span class="rider-bell-badge" style="position:static;">@Model.UnreadNotificationsCount unread</span>
+                        }
+                    </div>
+                    @if (Model.UnreadNotificationsCount > 0) {
+                        <form method="post" asp-controller="Rider" asp-action="MarkNotificationsRead" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-ghost btn-sm">Mark all read</button>
+                        </form>
+                    }
+                </div>
+                <div class="job-card-body" style="padding:0;">
+                    @if (!Model.Notifications.Any()) {
+                        <div class="empty-state">
+                            <p>No notifications yet. New pickup and delivery assignments will appear here.</p>
+                        </div>
+                    } else {
+                        @foreach (var note in Model.Notifications) {
+                            <div class="rider-note @(note.IsRead ? "" : "unread")">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                                    <strong style="font-size:0.9rem;color:var(--lh-text-headings);">@note.Title</strong>
+                                    <span style="font-size:0.75rem;color:var(--lh-text-muted);white-space:nowrap;">@note.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                                </div>
+                                <p style="font-size:0.85rem;color:var(--lh-text-body);margin:4px 0 0;">@note.Body</p>
+                                @if (!note.IsRead) {
+                                    <form method="post" asp-controller="Rider" asp-action="MarkNotificationsRead" style="margin-top:8px;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@note.Id" />
+                                        <button type="submit" class="btn btn-ghost btn-sm">Mark read</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    }
                 </div>
             </div>
 
@@ -345,7 +525,7 @@
                                             <span class="job-info-value">@job.PreferredPickupDate.ToString("MMM d") — @job.PreferredPickupTime</span>
                                         </div>
                                     </div>
-                                    <div class="job-actions">
+                                <div class="job-actions">
                                         <button class="btn btn-primary btn-sm" onclick="showPanel('jobs')">
                                             View Job Details
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -382,7 +562,25 @@
                 </div>
             } else {
                 <div class="jobs-grid">
+                    <script type="application/json" id="rider-timeline-data">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveJobs.Select(j => new {
+    orderNumber = j.OrderNumber,
+    status = j.Status.ToString(),
+    leg = j.Status == OrderStatus.OutForDelivery ? "delivery" : "pickup",
+    createdAt = JsonUtc(j.CreatedAt),
+    riderAssignedAt = JsonUtc(j.RiderAssignedAt),
+    pickedUpAt = JsonUtc(j.PickedUpAt),
+    weightConfirmedAt = JsonUtc(j.WeightConfirmedAt),
+    washingStartedAt = JsonUtc(j.WashingStartedAt),
+    dryingStartedAt = JsonUtc(j.DryingStartedAt),
+    readyNotifiedAt = JsonUtc(j.ReadyForDeliveryNotifiedAt),
+    deliveryAssignedAt = JsonUtc(j.DeliveryAssignedAt),
+    deliveredAt = JsonUtc(j.DeliveredAt)
+}).ToList()))
+                    </script>
+                    @{ int jobIndex = 0; }
                     @foreach (var job in Model.ActiveJobs) {
+                        var timelineIndex = jobIndex++;
                         var isDeliveryJob = job.Status == OrderStatus.OutForDelivery;
                         var assignedAt = isDeliveryJob ? job.DeliveryAssignedAt : job.RiderAssignedAt;
                         var assignedLabel = isDeliveryJob ? "Dispatched" : "Assigned";
@@ -443,6 +641,7 @@
                                         <strong>Special Instructions:</strong> @job.SpecialInstructions
                                     </div>
                                 }
+                                <div data-timeline-surface="processing" data-timeline-orders="rider-timeline-data" data-timeline-index="@timelineIndex" data-timeline-leg="@(isDeliveryJob ? "delivery" : "pickup")" aria-label="Order stages for @job.OrderNumber"></div>
                                 <div class="job-actions">
                                     @if (job.Status == OrderStatus.RiderAssigned) {
                                         <button class="btn btn-orange" onclick="openPickupModal(@job.Id, '@job.OrderNumber')">
@@ -513,7 +712,8 @@
                             <p>No completed jobs yet.<br>Completed pickup and delivery assignments will appear here.</p>
                         </div>
                     } else {
-                        <table class="data-table" aria-label="Job history">
+                        <div class="rider-table-scroll" role="region" aria-label="Job history table" tabindex="0">
+                        <table class="data-table" id="rider-history-table" aria-label="Job history">
                             <thead>
                                 <tr>
                                     <th>Order #</th>
@@ -525,7 +725,7 @@
                                     <th>Photo</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="rider-history-body">
                                 @foreach (var job in Model.JobHistory) {
                                     var isDeliveryHistory = job.DeliveryRiderId == Model.Rider.Id;
                                     var activityLabel = isDeliveryHistory ? "Delivery" : "Pickup";
@@ -553,12 +753,49 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
+                        <div id="rider-history-pagination" aria-label="Job history pagination" style="padding:12px 16px;"></div>
                     }
                 </div>
             </div>
         </div>
 
     </main>
+
+    <!-- BOTTOM NAV (mobile, <=768px) -->
+    <nav class="rider-bottom-nav" aria-label="Rider menu">
+        <button type="button" class="rbn-item @(activeTab == "dashboard" ? "active" : "")" id="rbn-dashboard" onclick="showPanel('dashboard')" aria-current="@(activeTab == "dashboard" ? "page" : "false")">
+            <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+            </span>
+            Dashboard
+        </button>
+
+        <button type="button" class="rbn-item @(activeTab == "jobs" ? "active" : "")" id="rbn-jobs" onclick="showPanel('jobs')" aria-current="@(activeTab == "jobs" ? "page" : "false")">
+            <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/>
+                    <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+            </span>
+            Jobs
+            @if (Model.ActiveJobs.Count > 0) {
+                <span class="rbn-count">@Model.ActiveJobs.Count</span>
+            }
+        </button>
+
+        <button type="button" class="rbn-item @(activeTab == "history" ? "active" : "")" id="rbn-history" onclick="showPanel('history')" aria-current="@(activeTab == "history" ? "page" : "false")">
+            <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </span>
+            History
+        </button>
+    </nav>
 </div>
 
 <!-- MODAL: Mark as Picked Up (with photo upload) -->
@@ -634,7 +871,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-ghost" onclick="closeDeliveryModal()">Cancel</button>
-                <button type="submit" class="btn btn-success" style="background:#059669;border-color:#059669;">
+                <button type="submit" class="btn btn-success" style="background:var(--lh-accent-jade-dark);border-color:var(--lh-accent-jade-dark);">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     Confirm Delivered
                 </button>
@@ -643,15 +880,24 @@
     </div>
 </div>
 
+<script src="~/js/order-timeline.js"></script>
+<script src="~/js/simple-pager.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.SimplePager) SimplePager.paginate('rider-history-body', 'rider-history-pagination', 10);
+});
 /* ── Panel navigation ── */
 function showPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sb-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.rbn-item').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-current', 'false'); });
     const panel = document.getElementById('panel-' + name);
     if (panel) panel.classList.add('active');
     const nav = document.getElementById('nav-' + name);
     if (nav) nav.classList.add('active');
+    const mnav = document.getElementById('rbn-' + name);
+    if (mnav) { mnav.classList.add('active'); mnav.setAttribute('aria-current', 'page'); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ── Pickup modal ── */
@@ -724,6 +970,215 @@ document.addEventListener('keydown', function(e) {
 document.querySelectorAll('.alert').forEach(a => {
     setTimeout(() => { a.style.opacity = '0'; a.style.transition = 'opacity 0.5s'; setTimeout(() => a.remove(), 500); }, 4000);
 });
+
+/* ── Shared order timeline (read-only view of each job's own stages) ── */
+OrderTimeline.mountAll();
+
+/* ── Rider GPS Tracking Client (Phase 2C) ── */
+(function() {
+    let watchId = null;
+    let lastSentAt = 0;
+    let lastSentLat = null;
+    let lastSentLng = null;
+    let isSending = false;
+
+    const MIN_INTERVAL_MS = 10000; // ~10 seconds
+    const MIN_DISTANCE_METERS = 10; // ~10 meters
+
+    function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // meters
+        const phi1 = lat1 * Math.PI / 180;
+        const phi2 = lat2 * Math.PI / 180;
+        const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+        const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                  Math.cos(phi1) * Math.cos(phi2) *
+                  Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function setGpsUiState(state, statusText, subText) {
+        const card = document.getElementById('rider-gps-card');
+        const dot = document.getElementById('rider-gps-dot');
+        const text = document.getElementById('rider-gps-status-text');
+        const sub = document.getElementById('rider-gps-sub');
+        const btn = document.getElementById('btn-toggle-gps');
+
+        if (!card) return;
+
+        card.classList.remove('gps-state-off', 'gps-state-active', 'gps-state-error', 'gps-state-disabled');
+        card.classList.add('gps-state-' + state);
+
+        if (dot) {
+            dot.className = 'gps-dot dot-' + (state === 'active' ? 'active' : (state === 'error' ? 'error' : (state === 'disabled' ? 'disabled' : 'off')));
+        }
+        if (text) text.textContent = statusText;
+        if (sub && subText) sub.innerHTML = subText;
+
+        if (btn) {
+            if (state === 'active') {
+                btn.className = 'btn btn-gps-stop btn-sm';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"></rect></svg> Stop GPS';
+            } else if (state === 'disabled') {
+                btn.className = 'btn btn-ghost btn-sm';
+                btn.disabled = true;
+                btn.innerHTML = 'No Active Order';
+            } else {
+                btn.className = 'btn btn-gps-start btn-sm';
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Start GPS';
+            }
+        }
+    }
+
+    async function sendGpsCoordinates(lat, lng) {
+        const card = document.getElementById('rider-gps-card');
+        if (!card) return;
+        const orderIdVal = parseInt(card.getAttribute('data-order-id'), 10) || null;
+        const orderNum = card.getAttribute('data-order-num') || '';
+
+        isSending = true;
+        try {
+            const resp = await fetch('/api/rider/location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orderId: orderIdVal,
+                    latitude: lat,
+                    longitude: lng
+                })
+            });
+
+            if (resp.ok) {
+                lastSentAt = Date.now();
+                lastSentLat = lat;
+                lastSentLng = lng;
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                setGpsUiState('active', 'GPS Tracking Active', 'Broadcasting live location for order <strong style="color:var(--lh-text-headings);">' + orderNum + '</strong> · Last sent: ' + timeStr);
+            } else if (resp.status === 400) {
+                // Inactive order / invalid coordinates / lifecycle ended
+                stopRiderGps('off');
+                setGpsUiState('off', 'GPS Tracking Stopped', 'Order is no longer in an active tracking state.');
+            } else if (resp.status === 401 || resp.status === 403) {
+                stopRiderGps('error');
+                setGpsUiState('error', 'Session Expired / Unauthorized', 'Please log in again as an active rider.');
+            } else if (resp.status === 429) {
+                // Rate limited, wait for next cycle
+                console.warn('Rider GPS rate limit reached; throttling updates.');
+            } else {
+                setGpsUiState('error', 'GPS Connection Issue', 'Temporary issue reaching server. Retrying...');
+            }
+        } catch (err) {
+            setGpsUiState('error', 'Network Connection Offline', 'Unable to transmit location. Will retry when connection returns.');
+        } finally {
+            isSending = false;
+        }
+    }
+
+    function onGpsPosition(position) {
+        if (!position || !position.coords) return;
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const now = Date.now();
+
+        // Evaluate throttling conditions:
+        // 1. First location sends immediately (lastSentAt === 0).
+        // 2. Otherwise send if elapsed >= MIN_INTERVAL_MS (~10s).
+        // 3. Or send sooner if distance moved >= MIN_DISTANCE_METERS (~10m).
+        let shouldSend = false;
+        if (lastSentAt === 0) {
+            shouldSend = true;
+        } else if (now - lastSentAt >= MIN_INTERVAL_MS) {
+            shouldSend = true;
+        } else if (lastSentLat !== null && lastSentLng !== null) {
+            const dist = calculateDistanceMeters(lastSentLat, lastSentLng, lat, lng);
+            if (dist >= MIN_DISTANCE_METERS) {
+                shouldSend = true;
+            }
+        }
+
+        if (shouldSend && !isSending) {
+            sendGpsCoordinates(lat, lng);
+        }
+    }
+
+    function onGpsError(err) {
+        let msg = 'Location error occurred.';
+        if (err.code === 1) { // PERMISSION_DENIED
+            msg = 'Location access was denied. Please allow geolocation in your browser settings.';
+            stopRiderGps('off');
+            setGpsUiState('off', 'GPS Permission Denied', msg);
+        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+            msg = 'GPS signal unavailable. Ensure location/GPS is toggled on your device.';
+            setGpsUiState('error', 'GPS Unavailable', msg);
+        } else if (err.code === 3) { // TIMEOUT
+            msg = 'GPS request timed out. Searching for satellites...';
+            setGpsUiState('error', 'GPS Search Timeout', msg);
+        } else {
+            setGpsUiState('error', 'GPS Error', msg);
+        }
+    }
+
+    window.startRiderGps = function() {
+        const card = document.getElementById('rider-gps-card');
+        if (!card || card.getAttribute('data-has-eligible') !== 'true') {
+            return;
+        }
+        if (watchId !== null) {
+            return; // Already active, prevent duplicate watches
+        }
+        if (!navigator.geolocation) {
+            setGpsUiState('error', 'GPS Not Supported', 'Your device or browser does not support Geolocation.');
+            return;
+        }
+
+        setGpsUiState('active', 'Acquiring GPS Signal...', 'Connecting to satellites and verifying position...');
+        lastSentAt = 0;
+
+        watchId = navigator.geolocation.watchPosition(onGpsPosition, onGpsError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 5000
+        });
+    };
+
+    window.stopRiderGps = function(stateOverride) {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        const card = document.getElementById('rider-gps-card');
+        const hasEligible = card && card.getAttribute('data-has-eligible') === 'true';
+        const orderNum = card ? (card.getAttribute('data-order-num') || '') : '';
+
+        const finalState = stateOverride || (hasEligible ? 'off' : 'disabled');
+        const statusText = hasEligible ? 'GPS Tracking Off' : 'No Active Tracking Order';
+        const subText = hasEligible
+            ? 'Ready to track order <strong style="color:var(--lh-text-headings);">' + orderNum + '</strong>'
+            : 'GPS tracking is only active during pickup or out-for-delivery trips';
+
+        setGpsUiState(finalState, statusText, subText);
+    };
+
+    window.toggleRiderGps = function() {
+        if (watchId !== null) {
+            window.stopRiderGps();
+        } else {
+            window.startRiderGps();
+        }
+    };
+
+    // Clean up watch on page unload
+    window.addEventListener('beforeunload', function() {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+    });
+})();
 </script>
 </body>
 </html>

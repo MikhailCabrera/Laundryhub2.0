@@ -2,6 +2,8 @@
 @using LaundryHub2._0.Models
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
+@using Microsoft.Extensions.Options
+@inject IOptions<LaundryHub2._0.Models.MapSettings> MapSettingsOptions
 @{
     Layout = null;
     ViewData["Title"] = "Admin | Laundry Hub Davao City";
@@ -66,6 +68,8 @@
     var canClaimsResolve = (await AuthorizationService.AuthorizeAsync(User, "ClaimsResolve")).Succeeded;
     var canRevenueView = (await AuthorizationService.AuthorizeAsync(User, "RevenueView")).Succeeded;
     var canAuditView = (await AuthorizationService.AuthorizeAsync(User, "AuditView")).Succeeded;
+    var canViewDispatchMap = User.IsInRole("Admin") || User.IsInRole("Manager");
+    var mapSettings = MapSettingsOptions.Value;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -77,19 +81,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @if (canViewDispatchMap) {
+        <link rel="stylesheet" href="~/lib/maplibre-gl/maplibre-gl.css" />
+    }
     <style>
         :root {
-            --lh-navy-950:#071324;--lh-navy-900:#0B1E36;--lh-navy-800:#102A4C;--lh-navy-700:#163865;
-            --lh-blue-600:#1D4ED8;--lh-blue-500:#1E60D5;--lh-blue-400:#3B82F6;--lh-blue-300:#60A5FA;
-            --lh-blue-200:#93C5FD;--lh-blue-100:#BFDBFE;--lh-blue-50:#EBF3FE;--lh-blue-25:#F4F8FE;--lh-blue-10:#F8FAFD;
-            --lh-white:#FFFFFF;--lh-text-headings:#0B1E36;--lh-text-body:#334E68;--lh-text-muted:#627D98;
-            --lh-border-light:#D8E6F8;--lh-border-subtle:#E2EDFA;--lh-border-focus:#1E60D5;
-            --lh-font-heading:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            --lh-font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            --lh-shadow-sm:0 2px 6px rgba(16,42,76,0.04);--lh-shadow-md:0 8px 24px rgba(16,42,76,0.08);
-            --lh-shadow-lg:0 16px 36px rgba(16,42,76,0.12);--lh-shadow-xl:0 24px 50px rgba(16,42,76,0.16);
-            --lh-transition:all 0.22s cubic-bezier(0.16,1,0.3,1);
-            --lh-radius-sm:6px;--lh-radius-md:10px;--lh-radius-lg:16px;--lh-radius-xl:24px;
+            /* --lh-* design tokens load from the canonical wwwroot/css/site.css (linked above); page-scoped vars stay here. */
+            /* Page-scoped vars only; card radius token per shared responsive contract. */
+            --lh-card-radius:20px;--lh-touch-min:0px;
             --sidebar-width:300px;
             --c-active:#10B981;--c-active-bg:#ECFDF5;--c-active-border:#A7F3D0;
             --c-suspended:#F59E0B;--c-suspended-bg:#FFFBEB;--c-suspended-border:#FDE68A;
@@ -144,7 +144,7 @@
         .panel-title-group{display:flex;flex-direction:column;gap:4px;}
         .panel-title{font-family:var(--lh-font-heading);font-size:1.625rem;font-weight:800;color:var(--lh-text-headings);line-height:1.2;margin:0;}
         .panel-subtitle{font-size:0.875rem;color:var(--lh-text-muted);margin:0;}
-        .card{background:var(--lh-white);border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;}
+        .card{background:var(--lh-white);border-radius:var(--lh-card-radius);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;}
         .card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:20px 24px;border-bottom:1px solid var(--lh-border-subtle);}
         .card-header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
         .card-body{padding:0;}
@@ -250,7 +250,7 @@
         .lh-page-btn:disabled{opacity:0.45;cursor:not-allowed;background-color:var(--lh-blue-10);}
         /* Dashboard panel */
         .dash-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
-        .dash-stat-card{background:var(--lh-white);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-lg);padding:22px 24px;box-shadow:var(--lh-shadow-sm);display:flex;flex-direction:column;gap:6px;}
+        .dash-stat-card{background:var(--lh-white);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-card-radius);padding:22px 24px;box-shadow:var(--lh-shadow-sm);display:flex;flex-direction:column;gap:6px;}
         .dash-stat-icon{width:40px;height:40px;border-radius:var(--lh-radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
         .dash-stat-label{font-size:0.75rem;font-weight:600;color:var(--lh-text-muted);text-transform:uppercase;letter-spacing:0.06em;}
         .dash-stat-value{font-family:var(--lh-font-heading);font-size:2rem;font-weight:800;color:var(--lh-text-headings);line-height:1;}
@@ -282,6 +282,28 @@
         .ord-cancelled{background:#F9FAFB;color:#6B7280;border:1px solid #E5E7EB;}.ord-cancelled::before{background:#9CA3AF;}
         .ord-abandoned{background:#FEF2F2;color:#9B1C1C;border:1px solid #FECACA;}.ord-abandoned::before{background:#EF4444;}
         .ord-default{background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;}.ord-default::before{background:#6B7280;}
+        /* ── Dispatch Map Styles (Phase 2F) ── */
+        .dispatch-map-container{width:100%;height:440px;position:relative;background:#E2E8F0;border-radius:0 0 var(--lh-card-radius) var(--lh-card-radius);overflow:hidden;}
+        .dispatch-map-canvas{width:100%;height:100%;}
+        .dispatch-map-overlay{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none;}
+        .dispatch-overlay-pill{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,0.92);backdrop-filter:blur(6px);border:1px solid var(--lh-border-subtle);border-radius:20px;font-size:0.75rem;font-weight:600;color:var(--lh-text-headings);box-shadow:var(--lh-shadow-sm);}
+        .dispatch-dot{width:8px;height:8px;border-radius:50%;}
+        .dispatch-dot.dot-live{background:#10B981;box-shadow:0 0 0 2px rgba(16,185,129,0.25);animation:dispatchPulse 2s infinite;}
+        .dispatch-dot.dot-stale{background:#F59E0B;}
+        .dispatch-dot.dot-offline{background:#9CA3AF;}
+        @@keyframes dispatchPulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.5);}70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}}
+        .dispatch-rider-marker{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.25);cursor:pointer;transition:transform 0.15s ease;}
+        .dispatch-rider-marker:hover{transform:scale(1.15);}
+        .dispatch-rider-marker.is-live{background:#10B981;}
+        .dispatch-rider-marker.is-stale{background:#F59E0B;}
+        .dispatch-rider-marker.is-waiting{background:#6B7280;}
+        .dispatch-order-marker{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;}
+        .dispatch-order-marker.is-pickup{background:#2563EB;}
+        .dispatch-order-marker.is-delivery{background:#7C3AED;}
+        .dispatch-popup{font-family:var(--lh-font-body);padding:2px;font-size:0.8125rem;}
+        .dispatch-popup-title{font-weight:700;color:var(--lh-text-headings);font-size:0.875rem;margin-bottom:4px;}
+        .dispatch-popup-row{display:flex;gap:4px;margin-bottom:2px;color:var(--lh-text-body);}
+        .dispatch-popup-row strong{color:var(--lh-text-headings);}
         .ord-row.hidden{display:none !important;}
         /* ── Admin flash alerts ── */
         .admin-alert{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:var(--lh-radius-md);font-size:0.875rem;font-weight:500;}
@@ -294,19 +316,78 @@
         .inv-fill-bar{height:100%;border-radius:9999px;transition:width 0.2s ease;}
         .pd-row{cursor:pointer;}
         .pd-detail-cell{background:var(--lh-blue-10);}
-        .pd-timeline{list-style:none;margin:0;padding:10px 4px 6px;display:flex;flex-wrap:wrap;gap:10px 22px;}
-        .pd-timeline li{display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--lh-text-muted);}
-        .pd-tl-dot{width:10px;height:10px;border-radius:50%;background:#CBD5E1;flex-shrink:0;}
-        .pd-tl-done{color:var(--lh-text-body);}
-        .pd-tl-done .pd-tl-dot{background:#10B981;}
-        .pd-tl-current{color:var(--lh-text-headings);font-weight:600;}
-        .pd-tl-current .pd-tl-dot{background:#F59E0B;box-shadow:0 0 0 3px rgba(245,158,11,0.2);}
-        .pd-tl-time{font-size:0.75rem;font-weight:400;}
         .pd-chevron{color:var(--lh-text-muted);font-size:0.8rem;}
+
+        /* ============ Shared responsive contract (breakpoints 1024px / 640px) ============ */
+        /* Horizontal scroll lives on the table wrapper only — never on the page. */
+        .table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+        .table-scroll th:first-child,.table-scroll td:first-child{position:sticky;left:0;z-index:2;background:var(--lh-white);}
+        .table-scroll thead th:first-child{background:var(--lh-blue-25);z-index:3;}
+        .table-scroll tbody tr:hover td:first-child{background:var(--lh-blue-25);}
+        .table-scroll th:first-child::after,.table-scroll td:first-child::after{content:"";position:absolute;top:0;right:0;bottom:0;width:1px;background:var(--lh-border-subtle);}
+
+        /* Condensed essential-column disclosure control (injected by the row-toggle script). */
+        .row-toggle{display:none;align-items:center;justify-content:center;min-width:var(--lh-touch-min);min-height:var(--lh-touch-min);margin-right:8px;border:1px solid var(--lh-border-light);border-radius:var(--lh-radius-sm);background:var(--lh-white);color:var(--lh-text-muted);cursor:pointer;vertical-align:middle;}
+        .row-toggle[aria-expanded="true"] svg{transform:rotate(180deg);}
+
+        /* Collapsible sidebar chrome (desktop hidden, <=1024px shown). */
+        .sidebar-toggle{display:none;position:fixed;top:12px;left:12px;z-index:120;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid var(--lh-border-light);border-radius:var(--lh-radius-md);background:var(--lh-white);color:var(--lh-text-headings);box-shadow:var(--lh-shadow-sm);cursor:pointer;}
+        .sidebar-scrim{display:none;position:fixed;inset:0;background:rgba(7,19,36,0.45);z-index:110;}
+
+        /* Bottom navigation (sidebar hidden at <=640px). */
+        .admin-bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:120;background:var(--lh-navy-900);border-top:1px solid var(--lh-navy-800);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));}
+        .admin-bottom-nav-inner{display:flex;align-items:stretch;justify-content:space-around;gap:4px;}
+        .admin-bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:var(--lh-touch-min);padding:6px 4px;border-radius:var(--lh-radius-md);color:rgba(255,255,255,0.62);font-size:0.6875rem;font-weight:600;text-decoration:none;}
+        .admin-bottom-nav-item.active{color:var(--lh-white);background:rgba(59,130,246,0.16);}
+        .admin-bottom-nav-item .nav-icon{display:flex;width:20px;height:20px;align-items:center;justify-content:center;}
+
+        /* 1024px and below: sidebar collapses off-canvas, essential table columns only. */
+        @@media (max-width: 1024px) {
+            .sidebar-toggle{display:flex;}
+            .admin-sidebar{transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);box-shadow:none;}
+            .admin-sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(7,19,36,0.28);}
+            .admin-sidebar.open ~ .sidebar-scrim{display:block;}
+            .admin-main{margin-left:0;padding:64px 20px 32px;min-width:0;}
+            .dash-stat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+            .table-scroll th:nth-child(n+4):not(:last-child),.table-scroll td:nth-child(n+4):not(:last-child){display:none;}
+            .table-scroll tr.row-expanded th:nth-child(n+4):not(:last-child),.table-scroll tr.row-expanded td:nth-child(n+4):not(:last-child){display:table-cell;}
+            .row-toggle{display:inline-flex;}
+            .data-table thead th,.data-table tbody td{padding:12px 14px;}
+            .lh-pagination-wrapper{padding:14px 16px;}
+        }
+
+        /* 640px and below: two essential columns plus the trailing action column, sidebar hidden. */
+        @@media (max-width: 640px) {
+            .admin-sidebar{display:none;}
+            .admin-bottom-nav{display:block;}
+            .admin-main{padding:64px 14px 84px;}
+            .panel-header{gap:8px;}
+            .dash-stat-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+            .table-scroll th:nth-child(n+3):not(:last-child),.table-scroll td:nth-child(n+3):not(:last-child){display:none;}
+            .table-scroll tr.row-expanded th:nth-child(n+3):not(:last-child),.table-scroll tr.row-expanded td:nth-child(n+3):not(:last-child){display:table-cell;}
+            .card-header{padding:16px;}
+            .search-input{width:100%;}
+            .modal-header{padding:18px 18px 14px;}
+        }
+
+        /* Touch sizing: 44px minimums come from the token, never per-button overrides. */
+        @@media (pointer: coarse) {
+            :root{--lh-touch-min:44px;}
+            .btn,.btn-sm,.btn-icon,.chip,.lh-page-btn,.modal-close,.filter-chip{min-height:var(--lh-touch-min);}
+            .btn,.btn-sm,.btn-icon,.chip,.lh-page-btn,.modal-close,.filter-chip{min-width:var(--lh-touch-min);}
+            .sidebar-nav-item,.sidebar-nav-child{min-height:var(--lh-touch-min);}
+            .sidebar-toggle{min-width:var(--lh-touch-min);min-height:var(--lh-touch-min);}
+            .row-toggle{min-width:var(--lh-touch-min);min-height:var(--lh-touch-min);}
+        }
     </style>
 </head>
 <body>
 <div class="admin-shell" id="admin-root">
+
+    <!-- COLLAPSIBLE SIDEBAR TOGGLE (visible <=1024px) -->
+    <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="adminSidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
 
     <!-- SIDEBAR -->
     <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
@@ -355,6 +436,7 @@
             </button>
 
             <div class="sidebar-nav-children" id="nav-account-children">
+                @if (canUserManagement) {
                 <button class="sidebar-nav-child" id="nav-child-employees" onclick="showPanel('employees')">
                     <span class="nav-icon" aria-hidden="true">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -373,6 +455,7 @@
                     </span>
                     Customer Management
                 </button>
+                }
             </div>
 
             <button class="sidebar-nav-item" id="nav-orders" onclick="showPanel('orders')">
@@ -496,6 +579,9 @@
             </form>
         </div>
     </aside>
+
+    <!-- SIDEBAR SCRIM (<=1024px) -->
+    <div class="sidebar-scrim" id="sidebarScrim" aria-hidden="true"></div>
 
     <!-- MAIN CONTENT -->
     <main class="admin-main" id="admin-main-content" aria-label="Admin main content">
@@ -629,12 +715,21 @@
             <!-- Orders table card -->
             <div class="card">
                 <div class="card-header" style="flex-wrap:wrap;gap:12px;">
-                    <div class="card-header-left">
+                    <div class="card-header-left" style="flex-direction:column;align-items:flex-start;gap:8px;">
                         <div class="filter-chips" id="orders-filter-chips">
                             <span class="chip active" data-filter="all" onclick="filterOrders('all')">All (@Model.Orders.Count)</span>
                             <span class="chip" data-filter="pending" onclick="filterOrders('pending')">Pending (@Model.PendingOrdersCount)</span>
                             <span class="chip" data-filter="ongoing" onclick="filterOrders('ongoing')">In Progress (@(Model.OngoingOrdersCount + Model.AwaitingPaymentCount))</span>
                             <span class="chip" data-filter="completed" onclick="filterOrders('completed')">Completed (@Model.CompletedOrdersCount)</span>
+                        </div>
+                        <div class="filter-chips" id="orders-stage-chips" aria-label="Laundry processing stages">
+                            <span class="chip" data-stage="Weighing" onclick="filterOrderStage('Weighing')">Waiting for Weight (@Model.Orders.Count(o => o.Status == OrderStatus.Weighing))</span>
+                            <span class="chip" data-stage="WeightConfirmed" onclick="filterOrderStage('WeightConfirmed')">Confirm Weight (@Model.Orders.Count(o => o.Status == OrderStatus.WeightConfirmed))</span>
+                            <span class="chip" data-stage="AwaitingPayment" onclick="filterOrderStage('AwaitingPayment')">Waiting for Payment (@Model.AwaitingPaymentCount)</span>
+                            <span class="chip" data-stage="PaymentConfirmed" onclick="filterOrderStage('PaymentConfirmed')">Ready for Processing (@Model.Orders.Count(o => o.Status == OrderStatus.PaymentConfirmed))</span>
+                            <span class="chip" data-stage="Washing" onclick="filterOrderStage('Washing')">Washing (@Model.Orders.Count(o => o.Status == OrderStatus.Washing))</span>
+                            <span class="chip" data-stage="Drying" onclick="filterOrderStage('Drying')">Drying (@Model.Orders.Count(o => o.Status == OrderStatus.Drying))</span>
+                            <span class="chip" data-stage="ReadyForDelivery" onclick="filterOrderStage('ReadyForDelivery')">Processing Complete (@Model.Orders.Count(o => o.Status == OrderStatus.ReadyForDelivery))</span>
                         </div>
                     </div>
                     <div class="search-wrap">
@@ -649,24 +744,38 @@
                             <p>No orders yet. Customer orders will appear here once bookings are placed.</p>
                         </div>
                     } else {
-                        <table class="data-table" id="orders-table" aria-label="Laundry service orders">
+                                                <div class="table-scroll">
+<table class="data-table" id="orders-table" aria-label="Laundry service orders">
                             <thead>
                                 <tr>
                                     <th>Order #</th>
                                     <th>Customer</th>
                                     <th>Services</th>
+                                    <th>Weight / Total</th>
                                     <th>Pickup Date / Time</th>
                                     <th>Status</th>
                                     <th>Riders</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="orders-table-body">
                                 @foreach (var order in Model.Orders) {
                                     var svcList = string.Join(", ", order.OrderServices.Select(os => os.Service?.Name ?? "?"));
                                     if (svcList.Length > 45) svcList = svcList.Substring(0, 42) + "...";
                                     var searchKey = $"{order.OrderNumber} {order.Customer?.FullName} {svcList} {order.ContactNumber}";
-                                    <tr class="ord-row" data-status-group="@OrderStatusGroup(order.Status)" data-search="@searchKey.ToLower()">
+                                    var needsWashRow = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresWashing);
+                                    var needsDryRow = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresDrying);
+                                    var stageHint = order.Status switch {
+                                        OrderStatus.Weighing => "Waiting for weight",
+                                        OrderStatus.WeightConfirmed => "Waiting for customer confirm",
+                                        OrderStatus.AwaitingPayment => (order.IsPaymentConfirmed ? "Paid" : "Waiting for payment"),
+                                        OrderStatus.PaymentConfirmed => (!order.ProcessingCompletedAt.HasValue ? (needsWashRow ? "Next: Washing" : needsDryRow ? "Next: Drying" : "Next: Ready") : "Ready for delivery"),
+                                        OrderStatus.Washing => (needsDryRow ? "Now: Washing → next Drying" : "Now: Washing → next Ready"),
+                                        OrderStatus.Drying => "Now: Drying → next Ready",
+                                        OrderStatus.ReadyForDelivery => "Processing complete",
+                                        _ => ""
+                                    };
+                                    <tr class="ord-row" data-status-group="@OrderStatusGroup(order.Status)" data-status="@order.Status.ToString()" data-search="@searchKey.ToLower()">
                                         <td>
                                             <span style="font-weight:700;color:var(--lh-blue-600);font-size:0.825rem;font-family:var(--lh-font-heading);">@order.OrderNumber</span>
                                             <div style="font-size:0.7rem;color:var(--lh-text-muted);margin-top:2px;">@order.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</div>
@@ -680,7 +789,21 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style="font-size:0.8125rem;max-width:180px;">@(svcList.Length > 0 ? svcList : "—")</td>
+                                        <td style="font-size:0.8125rem;max-width:180px;">
+                                            <div>@(svcList.Length > 0 ? svcList : "—")</div>
+                                            @if (!string.IsNullOrEmpty(stageHint)) {
+                                                <div style="font-size:0.7rem;color:var(--lh-text-muted);margin-top:2px;">@stageHint</div>
+                                            }
+                                            @if (order.IsPaymentConfirmed) {
+                                                <div style="font-size:0.7rem;color:#059669;font-weight:700;margin-top:2px;">Paid</div>
+                                            } else if (order.TotalAmount.HasValue) {
+                                                <div style="font-size:0.7rem;color:#DC2626;font-weight:700;margin-top:2px;">Unpaid</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div style="font-size:0.8125rem;font-weight:600;color:var(--lh-text-headings);">@(order.WeightKg.HasValue ? $"{order.WeightKg.Value:N2} kg" : "—")</div>
+                                            <div style="font-size:0.8125rem;font-weight:700;color:var(--lh-text-headings);">@(order.TotalAmount.HasValue ? $"₱{order.TotalAmount.Value:N2}" : "Pending")</div>
+                                        </td>
                                         <td>
                                             <div style="font-size:0.8125rem;font-weight:600;color:var(--lh-text-headings);">@order.PreferredPickupDate.ToString("MMM d, yyyy")</div>
                                             <div style="font-size:0.75rem;color:var(--lh-text-muted);">@order.PreferredPickupTime</div>
@@ -736,56 +859,81 @@
                                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                                                         Enter Weight
                                                     </button>
-                                                } else if (order.Status == OrderStatus.WeightConfirmed) {
-                                                    var needsWashWC = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresWashing);
-                                                    var needsDryWC = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresDrying);
-                                                    if (!needsWashWC && !needsDryWC) {
-                                                        <form method="post" asp-controller="Admin" asp-action="ProcessingComplete" asp-route-id="@order.Id" style="display:inline;">
-                                                            @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;">
-                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                                                Complete Wash
-                                                            </button>
-                                                        </form>
-                                                    } else {
-                                                        <form method="post" asp-controller="Admin" asp-action="StartWashing" asp-route-id="@order.Id" style="display:inline;">
-                                                            @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-primary btn-sm" style="background:#0284C7;border-color:#0284C7;">
-                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                                                Start Washing
-                                                            </button>
-                                                        </form>
-                                                    }
+                                                 } else if (order.Status == OrderStatus.WeightConfirmed) {
+                                                     var nowUtc = DateTime.UtcNow;
+                                                     var initDeadline = order.WeightConfirmationDeadline;
+                                                     var extDeadline = order.WeightConfirmationExtensionDeadline;
+                                                     var canOverride = initDeadline.HasValue && nowUtc > initDeadline.Value && extDeadline.HasValue && nowUtc > extDeadline.Value;
+                                                     <div style="display:flex;flex-direction:column;gap:6px;">
+                                                         <span class="role-badge" style="background:#FFFBEB;color:#B45309;border-color:#FDE68A;">Awaiting customer confirmation</span>
+                                                         @if (initDeadline.HasValue) {
+                                                             <span style="font-size:0.75rem;color:var(--lh-text-muted);">Initial deadline: @initDeadline.Value.ToString("yyyy-MM-dd HH:mm") UTC</span>
+                                                         }
+                                                         @if (extDeadline.HasValue) {
+                                                             <span style="font-size:0.75rem;color:var(--lh-text-muted);">Extension deadline: @extDeadline.Value.ToString("yyyy-MM-dd HH:mm") UTC</span>
+                                                         }
+                                                         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                                             <button type="button" class="btn btn-secondary btn-sm" onclick="openContactAttemptModal(@order.Id, '@order.OrderNumber')">Record Contact</button>
+                                                             <button type="button" class="btn btn-warning btn-sm" onclick="openExtendDeadlineModal(@order.Id, '@order.OrderNumber')">Extend Deadline</button>
+                                                             @if (canOverride) {
+                                                                 <button type="button" class="btn btn-primary btn-sm" style="background:#7C3AED;border-color:#7C3AED;" onclick="openWeightOverrideModal(@order.Id, '@order.OrderNumber', @(order.WeightKg ?? 0))">Weight Override</button>
+                                                             } else {
+                                                                 <button type="button" class="btn btn-sm" style="background:#94A3B8;border-color:#94A3B8;color:#FFF;" disabled title="Override available only after initial & extension deadlines have passed.">Override locked</button>
+                                                             }
+                                                         </div>
+                                                     </div>
                                                 } else if (order.Status == OrderStatus.Washing) {
                                                     var needsDryW = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresDrying);
                                                     if (needsDryW) {
                                                         <form method="post" asp-controller="Admin" asp-action="MarkDrying" asp-route-id="@order.Id" style="display:inline;">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-warning btn-sm" style="background:#D97706;border-color:#D97706;color:#FFF;">
+                                                            <button type="submit" class="btn btn-warning btn-sm" style="background:#D97706;border-color:#D97706;color:#FFF;" title="Washing done — advance this order to Drying.">
                                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                                                                Mark Drying
+                                                                Mark Washing Complete
                                                             </button>
                                                         </form>
                                                     } else {
                                                         <form method="post" asp-controller="Admin" asp-action="ProcessingComplete" asp-route-id="@order.Id" style="display:inline;">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;">
+                                                            <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;" title="Washing done — no drying required.">
                                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                                                Complete Wash
+                                                                Mark Washing Complete
                                                             </button>
                                                         </form>
                                                     }
                                                 } else if (order.Status == OrderStatus.Drying) {
                                                     <form method="post" asp-controller="Admin" asp-action="ProcessingComplete" asp-route-id="@order.Id" style="display:inline;">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;">
+                                                        <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;" title="Drying done — mark processing complete.">
                                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                                            Complete Wash
+                                                            Mark Drying Complete
                                                         </button>
                                                     </form>
                                                 } else if (order.Status == OrderStatus.AwaitingPayment) {
-                                                    <span class="role-badge" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5;">Awaiting Payment</span>
-                                                } else if (order.Status == OrderStatus.ReadyForDelivery || (order.Status == OrderStatus.PaymentConfirmed && order.ProcessingCompletedAt.HasValue)) {
+                                                    <span class="role-badge" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5;" title="Payment required before processing. Washing cannot start until payment is confirmed.">Awaiting Payment — payment required before processing</span>
+                                                 } else if (order.Status == OrderStatus.PaymentConfirmed && !order.ProcessingCompletedAt.HasValue) {
+                                                     var needsWashP = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresWashing);
+                                                     var needsDryP = order.OrderServices.Any(os => os.Service == null || os.Service.RequiresDrying);
+                                                     <div style="display:flex;flex-direction:column;gap:6px;">
+                                                         <span class="role-badge" style="background:#ECFDF5;color:#065F46;border-color:#A7F3D0;">Paid — ready for processing</span>
+                                                         @if (needsWashP) {
+                                                             <form method="post" asp-controller="Admin" asp-action="StartWashing" asp-route-id="@order.Id" style="display:inline;">
+                                                                 @Html.AntiForgeryToken()
+                                                                 <button type="submit" class="btn btn-primary btn-sm" title="Begin the washing stage for this paid order.">Start Washing</button>
+                                                             </form>
+                                                         } else if (needsDryP) {
+                                                             <form method="post" asp-controller="Admin" asp-action="StartDrying" asp-route-id="@order.Id" style="display:inline;">
+                                                                 @Html.AntiForgeryToken()
+                                                                 <button type="submit" class="btn btn-warning btn-sm" style="background:#D97706;border-color:#D97706;color:#FFF;" title="Begin drying for this dry-only paid order.">Start Drying</button>
+                                                             </form>
+                                                         } else {
+                                                             <form method="post" asp-controller="Admin" asp-action="ProcessingComplete" asp-route-id="@order.Id" style="display:inline;">
+                                                                 @Html.AntiForgeryToken()
+                                                                 <button type="submit" class="btn btn-success btn-sm" style="background:#059669;border-color:#059669;color:#FFF;" title="No wash/dry stage required — mark ready for delivery.">Mark Ready</button>
+                                                             </form>
+                                                         }
+                                                     </div>
+                                                 } else if (order.Status == OrderStatus.ReadyForDelivery || order.Status == OrderStatus.DeliveryAttemptFailed || (order.Status == OrderStatus.PaymentConfirmed && order.ProcessingCompletedAt.HasValue)) {
                                                     <button class="btn btn-primary btn-sm" style="background:#059669;border-color:#059669;" onclick="openAssignDeliveryModal(@order.Id, '@order.OrderNumber')">
                                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                                                         Assign Delivery Rider
@@ -799,6 +947,11 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
+                        <div id="orders-empty-filtered" class="empty-state" style="display:none;">
+                            <p>No orders match the current filter. Try a different stage or search.</p>
+                        </div>
+                        <div id="orders-pagination" aria-label="Laundry service orders pagination"></div>
                     }
                 </div>
             </div>
@@ -827,9 +980,10 @@
                     @if (!Model.Claims.Any(c => c.Status == "Open")) {
                         <p style="font-size:0.85rem;color:var(--lh-text-muted);">No open claims.</p>
                     } else {
-                        <table class="data-table" aria-label="Open claims">
+                                                <div class="table-scroll">
+<table class="data-table" id="open-claims-table" aria-label="Open claims">
                             <thead><tr><th>Claim #</th><th>Order #</th><th>Type</th><th>Reported By</th><th>Description</th>@if (canClaimsResolve) {<th>Resolve</th>}</tr></thead>
-                            <tbody>
+                            <tbody id="open-claims-body">
                                 @foreach (var claim in Model.Claims.Where(c => c.Status == "Open")) {
                                     <tr>
                                         <td style="font-weight:700;">@claim.Id</td>
@@ -854,14 +1008,17 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
+                        <div id="open-claims-pagination" aria-label="Open claims pagination"></div>
                     }
                     <h4 style="margin:20px 0 8px;font-size:0.9rem;">Resolved History</h4>
                     @if (!Model.Claims.Any(c => c.Status != "Open")) {
                         <p style="font-size:0.85rem;color:var(--lh-text-muted);">No resolved claims yet.</p>
                     } else {
-                        <table class="data-table" aria-label="Resolved claims">
+                                                <div class="table-scroll">
+<table class="data-table" id="resolved-claims-table" aria-label="Resolved claims">
                             <thead><tr><th>Claim #</th><th>Order #</th><th>Type</th><th>Status</th><th>Resolution</th></tr></thead>
-                            <tbody>
+                            <tbody id="resolved-claims-body">
                                 @foreach (var claim in Model.Claims.Where(c => c.Status != "Open")) {
                                     <tr>
                                         <td style="font-weight:700;">@claim.Id</td>
@@ -873,6 +1030,8 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
+                        <div id="resolved-claims-pagination" aria-label="Resolved claims pagination"></div>
                     }
                 </div>
             </div>
@@ -925,10 +1084,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="employee-table" aria-label="Employee accounts table">
+                                        <div class="table-scroll">
+<table class="data-table" id="employee-table" aria-label="Employee accounts table">
                         <thead><tr><th>Employee</th><th>Contact</th><th>District</th><th>Role</th><th>Status</th><th>Date Registered</th><th>Actions</th></tr></thead>
                         <tbody id="employee-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="employee-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <p>No employees found.</p>
@@ -983,10 +1144,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="customer-table" aria-label="Customer accounts table">
+                                        <div class="table-scroll">
+<table class="data-table" id="customer-table" aria-label="Customer accounts table">
                         <thead><tr><th>Customer</th><th>Contact</th><th>District</th><th>Status</th><th>Date Registered</th><th>Actions</th></tr></thead>
                         <tbody id="customer-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="customer-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                         <p>No customers found.</p>
@@ -996,6 +1159,7 @@
             </div>
         </div>
 
+        @if (canUserManagement) {
         <script type="application/json" id="employee-data">
 @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Employees.Select(e => new {
     id = e.Id,
@@ -1010,6 +1174,8 @@
     createdAt = JsonUtc(e.CreatedAt)
 })))
         </script>
+        }
+        @if (canUserManagement) {
         <script type="application/json" id="customer-data">
 @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Customers.Select(c => new {
     id = c.Id,
@@ -1024,6 +1190,7 @@
     createdAt = JsonUtc(c.CreatedAt)
 })))
         </script>
+        }
         <script type="application/json" id="billing-data">
 @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Orders.Where(o => o.WeightConfirmedAt.HasValue).OrderByDescending(o => o.WeightConfirmedAt).Select(o => new {
     id = o.Id,
@@ -1036,7 +1203,8 @@
     totalDue = (o.TotalAmount ?? 0m) + (o.AccruedPenaltyAmount ?? 0m),
     isPaid = o.IsPaymentConfirmed,
     weightConfirmedAt = JsonUtc(o.WeightConfirmedAt),
-    paymentDeadline = JsonUtc(o.ReadyForDeliveryNotifiedAt?.AddHours(24)),
+    paymentDeadline = JsonUtc(o.PaymentDeadlineAt ?? o.ReadyForDeliveryNotifiedAt?.AddHours(24)),
+    gracePeriodEnd = JsonUtc(o.GracePeriodEndAt ?? (o.PaymentDeadlineAt?.AddHours(72) ?? o.ReadyForDeliveryNotifiedAt?.AddHours(96))),
     paymentConfirmedAt = JsonUtc(o.PaymentConfirmedAt),
     paymentReference = o.PayMongoPaymentId,
     checkoutUrl = o.PayMongoCheckoutUrl
@@ -1065,10 +1233,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="billing-table" aria-label="Billing transactions">
+                                        <div class="table-scroll">
+<table class="data-table" id="billing-table" aria-label="Billing transactions">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Weight</th><th>Amount Due</th><th>Penalty</th><th>Total Due</th><th>Status</th><th>Weight Confirmed</th><th>Payment Deadline</th></tr></thead>
                         <tbody id="billing-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="billing-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                         <p>No billing records yet. Orders appear here as soon as their weight is confirmed.</p>
@@ -1140,9 +1310,10 @@
                 </div>
                 <div class="card-body">
                     <div id="inventory-tab-stock">
-                        <table class="data-table" aria-label="Inventory stock levels">
+                                                <div class="table-scroll">
+<table class="data-table" id="inventory-stock-table" aria-label="Inventory stock levels">
                             <thead><tr><th>Item</th><th>Stock</th><th>Fill Level</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody>
+                            <tbody id="inventory-stock-body">
                                 @foreach (var item in activeInventoryItems) {
                                     var fillPct = item.MaxCapacity > 0 ? Math.Min(100m, Math.Max(0m, item.CurrentStock / item.MaxCapacity * 100m)) : 0m;
                                     var isOut = item.CurrentStock <= 0;
@@ -1180,11 +1351,14 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
+                        <div id="inventory-stock-pagination" aria-label="Inventory stock pagination"></div>
                         @if (archivedInventoryItems.Any()) {
                             <h3 style="margin:28px 0 12px;font-size:1rem;">Archived Items</h3>
-                            <table class="data-table" aria-label="Archived inventory items">
+                                                        <div class="table-scroll">
+<table class="data-table" id="inventory-archived-table" aria-label="Archived inventory items">
                                 <thead><tr><th>Item</th><th>Stock</th><th>Actions</th></tr></thead>
-                                <tbody>
+                                <tbody id="inventory-archived-body">
                                     @foreach (var item in archivedInventoryItems) {
                                         var hasHistory = Model.InventoryTransactions.Any(t => t.InventoryItemId == item.Id);
                                         <tr>
@@ -1209,11 +1383,14 @@
                                     }
                                 </tbody>
                             </table>
+                            </div>
+                            <div id="inventory-archived-pagination" aria-label="Archived inventory pagination"></div>
                         }
                     </div>
                     <div id="inventory-tab-reports" style="display:none;">
                         <h3 style="margin:4px 0 12px;font-size:1rem;">Current Stock Overview</h3>
-                        <table class="data-table" aria-label="Current stock overview">
+                                                <div class="table-scroll">
+<table class="data-table" aria-label="Current stock overview">
                             <thead><tr><th>Item</th><th>Stock Level</th><th>% Full</th><th>Status</th></tr></thead>
                             <tbody>
                                 @foreach (var item in activeInventoryItems) {
@@ -1233,6 +1410,7 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                         <h3 style="margin:28px 0 12px;font-size:1rem;">Usage History</h3>
                         <div class="card-header" style="flex-wrap:wrap;gap:12px;padding:0 0 12px;border:none;">
                             <div class="card-header-left" style="flex-wrap:wrap;gap:10px;">
@@ -1264,10 +1442,12 @@
                                 <input type="text" class="search-input" id="inventory-search" placeholder="Search item, staff, notes..." />
                             </div>
                         </div>
-                        <table class="data-table" id="inventory-table" aria-label="Inventory usage history">
+                                                <div class="table-scroll">
+<table class="data-table" id="inventory-table" aria-label="Inventory usage history">
                             <thead><tr><th>Date / Time</th><th>Item</th><th>Action</th><th>Quantity</th><th>Previous → New</th><th>Staff</th><th>Notes</th></tr></thead>
                             <tbody id="inventory-table-body"></tbody>
                         </table>
+                        </div>
                         <div id="inventory-empty" class="empty-state" style="display:none;">
                             <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                             <p>No stock movements found for the selected filters.</p>
@@ -1279,7 +1459,8 @@
                                 <p>All stocked items are above their low-stock thresholds.</p>
                             </div>
                         } else {
-                            <table class="data-table" aria-label="Low stock items">
+                                                        <div class="table-scroll">
+<table class="data-table" aria-label="Low stock items">
                                 <thead><tr><th>Item</th><th>Stock / Threshold</th><th>% Full</th><th>Status</th></tr></thead>
                                 <tbody>
                                     @foreach (var item in lowInventoryItems) {
@@ -1294,6 +1475,7 @@
                                     }
                                 </tbody>
                             </table>
+                            </div>
                         }
                     </div>
                 </div>
@@ -1358,6 +1540,40 @@
                 <div class="stat-card"><div class="stat-label">Active Delivery Legs</div><div class="stat-value">@Model.Orders.Count(o => o.Status == OrderStatus.OutForDelivery)</div><div class="stat-sub">Out for delivery</div></div>
                 <div class="stat-card"><div class="stat-label">With Photo Proof</div><div class="stat-value">@Model.Orders.Count(o => (o.Status == OrderStatus.RiderAssigned || o.Status == OrderStatus.PickedUp || o.Status == OrderStatus.InTransitToShop) && !string.IsNullOrEmpty(o.PickupPhotoPath) || o.Status == OrderStatus.OutForDelivery && !string.IsNullOrEmpty(o.DeliveryPhotoPath))</div><div class="stat-sub">Pickup or delivery photo stored</div></div>
             </div>
+
+            @if (canViewDispatchMap) {
+                <!-- Live Dispatch Map (Phase 2F) -->
+                <div class="card" id="dispatch-map-card" style="margin-bottom:16px;">
+                    <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+                        <div class="card-header-left" style="gap:10px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lh-blue-600);"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="19" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+                                <span style="font-family:var(--lh-font-heading);font-weight:700;font-size:1rem;color:var(--lh-text-headings);">Live Rider Dispatch Map</span>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="refreshDispatchMap()" title="Refresh active dispatch tracking">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="dispatch-map-container" id="dispatchMapContainer">
+                            <div id="dispatchMap" class="dispatch-map-canvas"></div>
+                            <div class="dispatch-map-overlay">
+                                <div class="dispatch-overlay-pill" id="dispatchStatusPill">
+                                    <span class="dispatch-dot dot-offline" id="dispatchDot"></span>
+                                    <span id="dispatchStatusText">Initializing...</span>
+                                </div>
+                                <div class="dispatch-overlay-pill" id="dispatchRidersPill" style="display:none;">
+                                    <span id="dispatchRidersCount">0 active riders</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
             <div class="card">
                 <div class="card-header" style="flex-wrap:wrap;gap:12px;">
                     <div class="card-header-left" style="flex-wrap:wrap;gap:10px;">
@@ -1375,10 +1591,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="pickup-table" aria-label="Active pickup legs">
+                                        <div class="table-scroll">
+<table class="data-table" id="pickup-table" aria-label="Active pickup legs">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Pickup Rider</th><th>Stage</th><th>Leg Time</th><th>Photo</th><th>Timeline</th></tr></thead>
                         <tbody id="pickup-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="pickup-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                         <p>No active pickup legs. Orders appear here once a pickup rider is assigned.</p>
@@ -1401,10 +1619,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="delivery-table" aria-label="Active delivery legs">
+                                        <div class="table-scroll">
+<table class="data-table" id="delivery-table" aria-label="Active delivery legs">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Delivery Rider</th><th>Stage</th><th>Dispatched At</th><th>Photo</th><th>Timeline</th></tr></thead>
                         <tbody id="delivery-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="delivery-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                         <p>No active delivery legs. Orders appear here once dispatched for delivery.</p>
@@ -1475,10 +1695,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="tracking-table" aria-label="Service tracking">
+                                        <div class="table-scroll">
+<table class="data-table" id="tracking-table" aria-label="Service tracking">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Services</th><th>Weight</th><th>Total</th><th>Stage</th><th>Timeline</th></tr></thead>
                         <tbody id="tracking-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="tracking-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                         <p>No tracked orders yet. Orders appear here once their weight is confirmed.</p>
@@ -1552,15 +1774,27 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="crm-table" aria-label="Customer CRM">
-                        <thead><tr><th>Customer</th><th>Contact</th><th>Visits</th><th>Lifetime</th><th>Outstanding</th><th>Segment</th><th>History</th></tr></thead>
+                                        <div class="table-scroll">
+<table class="data-table" id="crm-table" aria-label="Customer CRM">
+                        <thead><tr><th aria-label="Select for promo"><input type="checkbox" id="crm-promo-selectall" onclick="toggleCrmPromoAll(this)" aria-label="Select all for promo" /></th><th>Customer</th><th>Contact</th><th>Visits</th><th>Lifetime</th><th>Outstanding</th><th>Segment</th><th>History</th></tr></thead>
                         <tbody id="crm-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="crm-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         <p>No customers found.</p>
                     </div>
                     <div id="crm-pagination"></div>
+                    <div style="border-top:1px solid var(--lh-border-subtle);padding:16px 24px;">
+                        <h4 style="margin:0 0 8px;font-size:0.9rem;">Dormant reactivation promo</h4>
+                        <p class="user-email" style="margin:0 0 8px;">Tick dormant customers above, compose one message — sent to all selected at once (one promo per customer per 7 days).</p>
+                        <input type="text" class="form-control" id="crm-promo-title" maxlength="150" placeholder="Promo title (max 150)" style="margin-bottom:8px;" />
+                        <textarea class="form-control" id="crm-promo-body" maxlength="1000" placeholder="Promo message (max 1000)..." style="margin-bottom:8px;"></textarea>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submitDormantPromo()">Send Promo</button>
+                            <span class="form-error" id="crm-promo-error"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1638,10 +1872,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="loyalty-table" aria-label="Loyalty members">
+                                        <div class="table-scroll">
+<table class="data-table" id="loyalty-table" aria-label="Loyalty members">
                         <thead><tr><th>Customer</th><th>Balance</th><th>Earned</th><th>Redeemed</th><th>Expiring ≤30d</th><th>Last Activity</th><th>Actions</th></tr></thead>
                         <tbody id="loyalty-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="loyalty-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         <p>No loyalty members found.</p>
@@ -1681,7 +1917,8 @@
                 var revenueOutstanding = new List<object>();
                 foreach (var o in Model.Orders.Where(o => !o.IsPaymentConfirmed && o.TotalAmount.HasValue && o.WeightConfirmedAt.HasValue && o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Abandoned && !o.IsAbandoned))
                 {
-                    var days = o.ReadyForDeliveryNotifiedAt.HasValue ? Math.Max(0, (int)Math.Floor((DateTime.UtcNow - o.ReadyForDeliveryNotifiedAt.Value.AddHours(24)).TotalDays)) : 0;
+                    var effectiveGraceEnd = o.GracePeriodEndAt ?? (o.PaymentDeadlineAt?.AddHours(72) ?? (o.ReadyForDeliveryNotifiedAt.HasValue ? o.ReadyForDeliveryNotifiedAt.Value.AddHours(96) : (DateTime?)null));
+                    var days = effectiveGraceEnd.HasValue ? Math.Max(0, (int)Math.Floor((DateTime.UtcNow - effectiveGraceEnd.Value).TotalDays)) : 0;
                     revenueOutstanding.Add(new {
                         orderNumber = o.OrderNumber,
                         customer = o.Customer != null ? o.Customer.FullName : "Unknown",
@@ -1723,32 +1960,40 @@
                 <div class="card-body">
                     <div class="stats-row" id="revenue-stats"></div>
                     <h3 style="margin:8px 0 12px;font-size:1rem;">Revenue by Day</h3>
-                    <table class="data-table" aria-label="Revenue by day">
+                                        <div class="table-scroll">
+<table class="data-table" aria-label="Revenue by day">
                         <thead><tr><th>Date</th><th>Paid Orders</th><th>Revenue</th></tr></thead>
                         <tbody id="revenue-daily-body"></tbody>
                     </table>
+                    </div>
                     <div id="revenue-daily-empty" class="empty-state" style="display:none;">
                         <p>No paid orders in the selected range.</p>
                     </div>
                     <h3 style="margin:28px 0 12px;font-size:1rem;">Revenue by Service</h3>
-                    <table class="data-table" aria-label="Revenue by service">
+                                        <div class="table-scroll">
+<table class="data-table" aria-label="Revenue by service">
                         <thead><tr><th>Service</th><th>Revenue Share</th><th>% of Paid</th></tr></thead>
                         <tbody id="revenue-service-body"></tbody>
                     </table>
+                    </div>
                     <h3 style="margin:28px 0 12px;font-size:1rem;">Outstanding Balances</h3>
                     <div class="stats-row" id="revenue-outstanding-stats" style="margin-bottom:12px;"></div>
-                    <table class="data-table" aria-label="Outstanding balances">
+                                        <div class="table-scroll">
+<table class="data-table" aria-label="Outstanding balances">
                         <thead><tr><th>Order #</th><th>Customer</th><th>Base</th><th>Penalty</th><th>Total Due</th><th>Overdue</th><th>Bucket</th></tr></thead>
                         <tbody id="revenue-outstanding-body"></tbody>
                     </table>
+                    </div>
                     <div id="revenue-outstanding-empty" class="empty-state" style="display:none;">
                         <p>No outstanding balances. All weighed orders are paid.</p>
                     </div>
                     <h3 style="margin:28px 0 12px;font-size:1rem;">Deliveries per Rider</h3>
-                    <table class="data-table" aria-label="Deliveries per rider">
+                                        <div class="table-scroll">
+<table class="data-table" aria-label="Deliveries per rider">
                         <thead><tr><th>Rider</th><th>Deliveries</th><th>Total Weight</th></tr></thead>
                         <tbody id="revenue-delivery-body"></tbody>
                     </table>
+                    </div>
                     <div id="revenue-delivery-empty" class="empty-state" style="display:none;">
                         <p>No deliveries recorded yet.</p>
                     </div>
@@ -1773,13 +2018,16 @@
                             <span class="chip" data-action="Payment" onclick="filterAudit('Payment')">Payments</span>
                             <span class="chip" data-action="Note" onclick="filterAudit('Note')">Notes</span>
                             <span class="chip" data-action="Refund" onclick="filterAudit('Refund')">Refunds</span>
+                            <span class="chip" data-action="Promo" onclick="filterAudit('Promo')">Promos</span>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="data-table" id="audit-table" aria-label="Audit log">
+                                        <div class="table-scroll">
+<table class="data-table" id="audit-table" aria-label="Audit log">
                         <tbody id="audit-table-body"></tbody>
                     </table>
+                    </div>
                     <div id="audit-empty" class="empty-state" style="display:none;">
                         <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                         <p>No audit entries yet. Admin actions will appear here.</p>
@@ -2250,7 +2498,18 @@
 }
 
 <script src="~/js/table-manager.js"></script>
+<script src="~/js/order-timeline.js"></script>
+<script src="~/js/simple-pager.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.SimplePager) {
+        SimplePager.paginate('open-claims-body', 'open-claims-pagination', 10);
+        SimplePager.paginate('resolved-claims-body', 'resolved-claims-pagination', 10);
+        SimplePager.paginate('inventory-stock-body', 'inventory-stock-pagination', 10);
+        SimplePager.paginate('inventory-archived-body', 'inventory-archived-pagination', 10);
+    }
+    if (typeof applyOrderFilters === 'function') applyOrderFilters();
+});
 /* ============================================================
    DATA STORE — live Identity users, serialized server-side into the
    #employee-data / #customer-data JSON blocks above. Snapshot is taken
@@ -2814,28 +3073,79 @@ document.addEventListener('keydown',function(e){
    ORDERS PANEL
    ============================================================ */
 var currentOrderFilter = 'all';
+var currentOrderStage = '';
+var currentOrdersPage = 1;
+var ordersPageSize = 10;
 
 function filterOrders(filter) {
     currentOrderFilter = filter;
+    currentOrderStage = '';
+    currentOrdersPage = 1;
     document.querySelectorAll('#orders-filter-chips .chip').forEach(c => {
         c.classList.toggle('active', c.dataset.filter === filter);
     });
+    document.querySelectorAll('#orders-stage-chips .chip').forEach(c => c.classList.remove('active'));
+    applyOrderFilters();
+}
+
+function filterOrderStage(stage) {
+    currentOrdersPage = 1;
+    if (currentOrderStage === stage) {
+        currentOrderStage = '';
+        document.querySelectorAll('#orders-stage-chips .chip').forEach(c => c.classList.remove('active'));
+    } else {
+        currentOrderStage = stage;
+        document.querySelectorAll('#orders-stage-chips .chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.stage === stage);
+        });
+    }
     applyOrderFilters();
 }
 
 function searchOrders(q) {
+    currentOrdersPage = 1;
     applyOrderFilters(q);
+}
+
+function ordersGoToPage(page) {
+    currentOrdersPage = page;
+    applyOrderFilters();
 }
 
 function applyOrderFilters(q) {
     const term = (q !== undefined ? q : (document.getElementById('orders-search')?.value || '')).toLowerCase().trim();
-    document.querySelectorAll('#orders-table .ord-row').forEach(row => {
+    const rows = Array.from(document.querySelectorAll('#orders-table .ord-row'));
+    const matched = rows.filter(row => {
         const grp = row.dataset.statusGroup || '';
+        const st = row.dataset.status || '';
         const txt = row.dataset.search || '';
         const matchFilter = currentOrderFilter === 'all' || grp === currentOrderFilter;
+        const matchStage = !currentOrderStage || st === currentOrderStage;
         const matchSearch = !term || txt.includes(term);
-        row.classList.toggle('hidden', !(matchFilter && matchSearch));
+        return matchFilter && matchStage && matchSearch;
     });
+    const totalPages = Math.max(1, Math.ceil(matched.length / ordersPageSize));
+    if (currentOrdersPage > totalPages) currentOrdersPage = totalPages;
+    const start = (currentOrdersPage - 1) * ordersPageSize;
+    const end = Math.min(start + ordersPageSize, matched.length);
+    const visible = new Set(matched.slice(start, end));
+    rows.forEach(row => row.classList.toggle('hidden', !visible.has(row)));
+    const emptyEl = document.getElementById('orders-empty-filtered');
+    if (emptyEl) emptyEl.style.display = matched.length === 0 ? 'block' : 'none';
+    renderOrdersPagination(matched.length, totalPages, start, end);
+}
+
+function renderOrdersPagination(total, totalPages, start, end) {
+    const c = document.getElementById('orders-pagination');
+    if (!c) return;
+    if (total === 0) { c.innerHTML = ''; return; }
+    let nums = '';
+    const sPage = Math.max(1, Math.min(currentOrdersPage - 2, totalPages - 4));
+    const ePage = Math.min(totalPages, sPage + 4);
+    for (let p = Math.max(1, ePage - 4); p <= ePage; p++) {
+        nums += `<button type="button" class="lh-page-btn ${p === currentOrdersPage ? 'active' : ''}" onclick="ordersGoToPage(${p})">${p}</button>`;
+    }
+    c.innerHTML = `<div class="lh-pagination-wrapper"><div class="lh-pagination-info">Showing <strong>${total === 0 ? 0 : start + 1}</strong> to <strong>${end}</strong> of <strong>${total}</strong> entries</div><div class="lh-pagination-nav"><button type="button" class="lh-page-btn lh-page-prev" ${currentOrdersPage <= 1 ? 'disabled' : ''} onclick="ordersGoToPage(${currentOrdersPage - 1})">Previous</button><div class="lh-page-numbers">${nums}</div><button type="button" class="lh-page-btn lh-page-next" ${currentOrdersPage >= totalPages ? 'disabled' : ''} onclick="ordersGoToPage(${currentOrdersPage + 1})">Next</button></div></div>`;
 }
 
 function openAssignRiderModal(orderId, orderNumber) {
@@ -3011,7 +3321,8 @@ function openBillingDetails(orderId) {
             <div class="stat-card"><div class="stat-label">Order</div><div class="stat-value" style="font-size:1.25rem;">${escapeBillingText(item.orderNumber)}</div><div class="stat-sub">${escapeBillingText(item.customerName)}</div></div>
             <div class="stat-card"><div class="stat-label">Total Due</div><div class="stat-value" style="font-size:1.25rem;">${formatBillingPeso(item.totalDue)}</div><div class="stat-sub">${billingPaymentBadge(item.isPaid)}</div></div>
         </div>
-        <table class="data-table" aria-label="Billing details">
+                <div class="table-scroll">
+<table class="data-table" aria-label="Billing details">
             <tbody>
                 <tr><td style="font-weight:600;width:42%;">Weight</td><td>${escapeBillingText(formatBillingWeight(item.weightKg))}</td></tr>
                 <tr><td style="font-weight:600;">Base amount</td><td>${formatBillingPeso(item.baseAmount)}</td></tr>
@@ -3022,7 +3333,8 @@ function openBillingDetails(orderId) {
                 <tr><td style="font-weight:600;">Weight confirmed</td><td>${escapeBillingText(formatBillingDateTime(item.weightConfirmedAt))}</td></tr>
                 <tr><td style="font-weight:600;">Payment deadline</td><td>${escapeBillingText(deadlineText)}</td></tr>
             </tbody>
-        </table>`;
+        </table>
+        </div>`;
     openModal('modal-billing-details');
 }
 
@@ -3153,41 +3465,6 @@ function clearInventoryHistoryFilters() {
     applyInventoryHistoryFilters();
 }
 
-function buildOrderStages(o){
-    const clean = v => (v === null || v === undefined || v === '') ? null : v;
-    const stages = [
-        { key:'placed', label:'Order placed', at:clean(o.createdAt) },
-        { key:'pickup_assigned', label:'Pickup rider assigned', at:clean(o.riderAssignedAt) },
-        { key:'picked_up', label:'Picked up', at:clean(o.pickedUpAt) },
-        { key:'in_transit', label:'In transit to shop', at:null },
-        { key:'weighed', label:'Weight confirmed', at:clean(o.weightConfirmedAt) },
-        { key:'washing', label:'Washing', at:clean(o.washingStartedAt) },
-        { key:'drying', label:'Drying', at:clean(o.dryingStartedAt) },
-        { key:'ready', label:'Ready for delivery', at:clean(o.readyNotifiedAt) },
-        { key:'out_for_delivery', label:'Out for delivery', at:clean(o.deliveryAssignedAt) },
-        { key:'delivered', label:'Delivered', at:clean(o.deliveredAt) }
-    ];
-    const byStatus = { pending:'placed', riderassigned:'pickup_assigned', pickedup:'picked_up', intransittoshop:'in_transit', weighing:'in_transit', weightconfirmed:'weighed', washing:'washing', drying:'drying', awaitingpayment:'drying', paymentconfirmed:'ready', readyfordelivery:'ready', outfordelivery:'out_for_delivery', deliveryattemptfailed:'out_for_delivery', delivered:'delivered' };
-    const statusIdx = stages.findIndex(s => s.key === byStatus[String(o.status || '').toLowerCase()]);
-    stages.forEach((s, i) => {
-        s.state = (s.at !== null || (statusIdx >= 0 && i < statusIdx)) ? 'done' : (i === statusIdx ? 'current' : 'todo');
-    });
-    return stages;
-}
-
-function renderOrderTimeline(stages){
-    return '<ol class="pd-timeline">' + stages.map(s => {
-        let time = '—';
-        if(s.at){
-            const d = new Date(s.at);
-            time = Number.isNaN(d.getTime()) ? '—' : formatDT(d);
-        }else if(s.state === 'current'){
-            time = 'in progress';
-        }
-        return '<li class="pd-tl-' + s.state + '"><span class="pd-tl-dot"></span><span class="pd-tl-label">' + escapeHtml(s.label) + '</span><span class="pd-tl-time">' + escapeHtml(time) + '</span></li>';
-    }).join('') + '</ol>';
-}
-
 let pickupTableMgr = null;
 let deliveryTableMgr = null;
 let pickupLegs = [];
@@ -3258,7 +3535,7 @@ function renderPickupRow(item){
             <td>${pdPhotoCell(item.pickupPhoto)}</td>
             <td><span class="pd-chevron" id="pd-ch-pickup-${item.id}">▸</span></td>
         </tr>
-        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="pd-timeline-wrap" id="pd-tl-pickup-${item.id}" style="display:none;"></div></td></tr>`;
+        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="lh-timeline-wrap" id="pd-tl-pickup-${item.id}" style="display:none;"></div></td></tr>`;
 }
 
 function renderDeliveryRow(item){
@@ -3273,7 +3550,7 @@ function renderDeliveryRow(item){
             <td>${pdPhotoCell(item.deliveryPhoto)}</td>
             <td><span class="pd-chevron" id="pd-ch-delivery-${item.id}">▸</span></td>
         </tr>
-        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="pd-timeline-wrap" id="pd-tl-delivery-${item.id}" style="display:none;"></div></td></tr>`;
+        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="lh-timeline-wrap" id="pd-tl-delivery-${item.id}" style="display:none;"></div></td></tr>`;
 }
 
 function pdFormatTime(value){
@@ -3287,12 +3564,12 @@ function togglePdTimeline(evt, listName, id){
     const wrap = document.getElementById('pd-tl-' + listName + '-' + id);
     if(!wrap) return;
     const isOpen = wrap.style.display !== 'none';
-    document.querySelectorAll('.pd-timeline-wrap').forEach(w => { w.style.display = 'none'; w.innerHTML = ''; });
+    document.querySelectorAll('.lh-timeline-wrap').forEach(w => { w.style.display = 'none'; w.innerHTML = ''; });
     document.querySelectorAll('.pd-chevron').forEach(c => { c.textContent = '▸'; });
     if(isOpen) return;
     const item = pdLegById(listName === 'pickup' ? pickupLegs : (listName === 'delivery' ? deliveryLegs : (listName === 'tracking' ? trackingLegs : crmLegs)), id);
     if(!item) return;
-    wrap.innerHTML = renderOrderTimeline(buildOrderStages(item));
+    wrap.innerHTML = OrderTimeline.render(item, 'legs');
     wrap.style.display = '';
     const chev = document.getElementById('pd-ch-' + listName + '-' + id);
     if(chev) chev.textContent = '▾';
@@ -3359,8 +3636,13 @@ function togglePdOverdue(listName){
 }
 
 function renderPickupDelivery(){
+
     initPickupDeliveryTables();
+    if (typeof initDispatchMap === 'function') {
+        initDispatchMap();
+    }
 }
+
 
 let trackingTableMgr = null;
 let trackingLegs = [];
@@ -3413,7 +3695,7 @@ function renderTrackingRow(item){
             <td>${pdStageBadge(item.status)}${trackOverdueBadge(item)}</td>
             <td><span class="pd-chevron" id="pd-ch-tracking-${item.id}">▸</span></td>
         </tr>
-        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="pd-timeline-wrap" id="pd-tl-tracking-${item.id}" style="display:none;"></div></td></tr>`;
+        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div class="lh-timeline-wrap" id="pd-tl-tracking-${item.id}" style="display:none;"></div></td></tr>`;
 }
 
 function initTrackingTable(){
@@ -3581,6 +3863,7 @@ function renderCrmRow(c){
     const segment = crmSegment(c);
     return `
         <tr class="pd-row" onclick="toggleCrmCustomer(event,'${escapeHtml(c.id)}')">
+            <td><input type="checkbox" class="crm-promo-check" value="${escapeHtml(c.id)}" onclick="event.stopPropagation()" aria-label="Select customer for promo" /></td>
             <td><div class="user-cell">
                 <div class="user-avatar" style="background:${avatarColor(c.fullName || '?')}">${initials(c.fullName || '?')}</div>
                 <div><div class="user-name">${escapeHtml(c.fullName)}</div><div class="user-email">${escapeHtml(c.email)}</div></div>
@@ -3592,7 +3875,7 @@ function renderCrmRow(c){
             <td>${crmSegmentBadge(segment)}${c.isArchived ? ' <span class="status-badge status-archived">Archived</span>' : (c.isSuspended ? ' <span class="status-badge status-suspended">Suspended</span>' : '')}</td>
             <td><span class="pd-crm-chevron" id="pd-crm-${escapeHtml(c.id)}">▸</span></td>
         </tr>
-        <tr class="pd-detail-row"><td colspan="7" class="pd-detail-cell"><div id="pd-tl-crm-${escapeHtml(c.id)}" style="display:none;"></div></td></tr>`;
+        <tr class="pd-detail-row"><td colspan="8" class="pd-detail-cell"><div id="pd-tl-crm-${escapeHtml(c.id)}" style="display:none;"></div></td></tr>`;
 }
 
 function toggleCrmCustomer(evt, id){
@@ -3613,7 +3896,7 @@ function toggleCrmCustomer(evt, id){
             <td>${o.isPaid ? '<span class="ord-badge ord-payment-confirmed">Paid</span>' : '<span class="ord-badge ord-awaiting-payment">Unpaid</span>'}</td>
             <td><button type="button" class="btn btn-ghost btn-sm" onclick="togglePdTimeline(event,'crm',${o.id})">Timeline</button></td>
         </tr>
-        <tr class="pd-detail-row"><td colspan="5" class="pd-detail-cell"><div class="pd-timeline-wrap" id="pd-tl-crm-${o.id}" style="display:none;"></div></td></tr>`).join('');
+        <tr class="pd-detail-row"><td colspan="5" class="pd-detail-cell"><div class="lh-timeline-wrap" id="pd-tl-crm-${o.id}" style="display:none;"></div></td></tr>`).join('');
     wrap.classList.add('pd-crm-detail');
     wrap.innerHTML = `
         <div class="stats-row" style="margin-bottom:12px;">
@@ -3622,7 +3905,7 @@ function toggleCrmCustomer(evt, id){
             <div class="stat-card"><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:1.25rem;">${crmPeso(c.outstandingBalance)}</div></div>
             <div class="stat-card"><div class="stat-label">Last Order</div><div class="stat-value" style="font-size:1rem;">${escapeHtml(crmDateText(c.lastOrderAt))}</div></div>
         </div>
-        <table class="data-table" aria-label="Order history"><tbody>${orders || '<tr><td style="color:var(--lh-text-muted);font-size:0.85rem;">No orders yet.</td></tr>'}</tbody></table>
+        <div class="table-scroll"><table class="data-table" aria-label="Order history"><tbody>${orders || '<tr><td style="color:var(--lh-text-muted);font-size:0.85rem;">No orders yet.</td></tr>'}</tbody></table></div>
         <h4 style="margin:16px 0 8px;font-size:0.9rem;">Staff Notes</h4>
         <div id="crm-notes-${escapeHtml(c.id)}">${renderCrmNotes(c)}</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
@@ -3656,6 +3939,28 @@ async function submitCustomerNote(customerId){
         window.location.href = '/Admin/Index?tab=crm';
     }catch(err){
         errEl.textContent = err.message || 'Note failed. Please try again.';
+    }
+}
+function toggleCrmPromoAll(box){
+    const on = box.checked;
+    document.querySelectorAll('.crm-promo-check').forEach(c => { c.checked = on; });
+}
+async function submitDormantPromo(){
+    const errEl = document.getElementById('crm-promo-error');
+    errEl.textContent = '';
+    const ids = Array.from(document.querySelectorAll('.crm-promo-check'))
+        .filter(c => c.checked)
+        .map(c => c.value);
+    const title = (document.getElementById('crm-promo-title').value || '').trim();
+    const body = (document.getElementById('crm-promo-body').value || '').trim();
+    if(!ids.length){ errEl.textContent = 'Please tick at least one dormant customer.'; return; }
+    if(!title || !body){ errEl.textContent = 'Please write a promo title and message first.'; return; }
+    try{
+        const data = await postUserAction('/Admin/SendDormantPromo', { CustomerIds: ids, Title: title, Body: body });
+        if(!data || !data.success) throw new Error((data && data.message) || 'Promo failed.');
+        window.location.href = '/Admin/Index?tab=crm';
+    }catch(err){
+        errEl.textContent = err.message || 'Promo failed. Please try again.';
     }
 }
 function initCrmTable(){
@@ -3998,5 +4303,621 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- BOTTOM NAVIGATION (sidebar hidden <=640px) -->
+<nav class="admin-bottom-nav" aria-label="Admin sections">
+    <div class="admin-bottom-nav-inner">
+        <button type="button" class="admin-bottom-nav-item active" data-nav-sync="nav-dashboard" onclick="showPanel('dashboard')">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+            </span>
+            Dashboard
+        </button>
+        <button type="button" class="admin-bottom-nav-item" data-nav-sync="nav-orders" onclick="showPanel('orders')">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </span>
+            Orders
+        </button>
+        <button type="button" class="admin-bottom-nav-item" data-nav-sync="nav-tracking" onclick="showPanel('tracking')">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </span>
+            Tracking
+        </button>
+        <button type="button" class="admin-bottom-nav-item" data-nav-sync="nav-billing" onclick="showPanel('billing')">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            </span>
+            Billing
+        </button>
+        <button type="button" class="admin-bottom-nav-item" data-nav-sync="nav-crm" onclick="showPanel('crm')">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
+            </span>
+            CRM
+        </button>
+    </div>
+</nav>
+
+<script>
+    /* Shared responsive contract: collapsible sidebar, bottom nav, condensed table columns. */
+    (function () {
+        var CHEVRON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+        function enhanceTable(table) {
+            if (!table.tHead || !table.tHead.rows[0] || !table.tBodies[0]) return;
+            if (table.tHead.rows[0].cells.length < 4) return;
+            var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+            rows.forEach(function (row) {
+                if (row.querySelector('.row-toggle')) return;
+                var cell = row.cells[0];
+                if (!cell) return;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'row-toggle';
+                btn.setAttribute('aria-expanded', 'false');
+                btn.setAttribute('aria-label', 'Show all columns for this row');
+                btn.innerHTML = CHEVRON;
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var open = row.classList.toggle('row-expanded');
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
+                cell.insertBefore(btn, cell.firstChild);
+            });
+        }
+
+        function enhance() {
+            var tables = document.querySelectorAll('.table-scroll table');
+            Array.prototype.forEach.call(tables, enhanceTable);
+        }
+
+        window.lhEnhanceResponsiveTables = enhance;
+
+        /* Sidebar collapse (off-canvas <=1024px) */
+        var sidebar = document.getElementById('adminSidebar');
+        var scrim = document.getElementById('sidebarScrim');
+        var toggle = document.getElementById('sidebarToggle');
+        function setSidebar(open) {
+            if (!sidebar || !toggle) return;
+            sidebar.classList.toggle('open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        if (toggle) {
+            toggle.addEventListener('click', function () {
+                setSidebar(!sidebar.classList.contains('open'));
+            });
+        }
+        if (scrim) {
+            scrim.addEventListener('click', function () { setSidebar(false); });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') setSidebar(false);
+        });
+
+        /* Bottom-nav active state mirrors the sidebar selection (also on programmatic showPanel). */
+        var nav = document.querySelector('.sidebar-nav');
+        function syncBottomNav() {
+            if (!nav) return;
+            var activeId = null;
+            var active = nav.querySelector('.sidebar-nav-item.active');
+            if (active) activeId = active.id;
+            var items = document.querySelectorAll('.admin-bottom-nav-item');
+            Array.prototype.forEach.call(items, function (item) {
+                item.classList.toggle('active', item.getAttribute('data-nav-sync') === activeId);
+            });
+        }
+        document.querySelectorAll('.admin-bottom-nav-item').forEach(function (item) {
+            item.addEventListener('click', function () { setSidebar(false); });
+        });
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () { enhance(); syncBottomNav(); });
+        } else {
+            enhance();
+            syncBottomNav();
+        }
+
+        if (window.MutationObserver) {
+            var mo = new MutationObserver(function () { enhance(); syncBottomNav(); });
+            mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        }
+
+        function openContactAttemptModal(orderId, orderNumber) {
+            document.getElementById('contact-order-id').value = orderId;
+            document.getElementById('contact-order-display').value = orderNumber;
+            openModal('modal-contact-attempt');
+        }
+        function openExtendDeadlineModal(orderId, orderNumber) {
+            document.getElementById('extend-order-id').value = orderId;
+            document.getElementById('extend-order-display').value = orderNumber;
+            openModal('modal-extend-deadline');
+        }
+        function openWeightOverrideModal(orderId, orderNumber, currentWeight) {
+            document.getElementById('override-order-id').value = orderId;
+            document.getElementById('override-order-display').value = orderNumber;
+            document.getElementById('override-estimated-weight').value = currentWeight || '';
+            openModal('modal-weight-override');
+        }
+    })();
+</script>
+
+<!-- Record Contact Attempt Modal -->
+<div class="modal-overlay" id="modal-contact-attempt" role="dialog" aria-modal="true" aria-labelledby="modal-contact-title">
+    <div class="modal" style="max-width:480px">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-contact-title">Record Customer Contact Attempt</h2>
+            <button class="modal-close" onclick="closeModal('modal-contact-attempt')" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form method="post" asp-controller="Admin" asp-action="RecordContactAttempt">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderId" id="contact-order-id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Order Number</label>
+                    <input type="text" class="form-input" id="contact-order-display" readonly style="background:var(--lh-bg-subtle);" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact Method</label>
+                    <select name="ContactMethod" class="form-input" required>
+                        <option value="">Select method...</option>
+                        <option value="Phone Call">Phone Call</option>
+                        <option value="SMS">SMS</option>
+                        <option value="Viber / Messenger">Viber / Messenger</option>
+                        <option value="Email">Email</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Outcome / Details</label>
+                    <textarea name="Outcome" class="form-input" rows="3" required placeholder="Describe contact attempt outcome (e.g. No answer, left voicemail, customer promised to reply)..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-contact-attempt')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Contact Attempt</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Extend Deadline Modal -->
+<div class="modal-overlay" id="modal-extend-deadline" role="dialog" aria-modal="true" aria-labelledby="modal-extend-title">
+    <div class="modal" style="max-width:480px">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-extend-title">Extend Weight Confirmation Deadline</h2>
+            <button class="modal-close" onclick="closeModal('modal-extend-deadline')" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form method="post" asp-controller="Admin" asp-action="ExtendWeightConfirmationDeadline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderId" id="extend-order-id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Order Number</label>
+                    <input type="text" class="form-input" id="extend-order-display" readonly style="background:var(--lh-bg-subtle);" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New Deadline (UTC)</label>
+                    <input type="datetime-local" name="NewDeadline" class="form-input" required />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-extend-deadline')">Cancel</button>
+                <button type="submit" class="btn btn-warning">Extend Deadline</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Weight Override Modal -->
+<div class="modal-overlay" id="modal-weight-override" role="dialog" aria-modal="true" aria-labelledby="modal-override-title">
+    <div class="modal" style="max-width:520px">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-override-title">Estimated-Weight Override</h2>
+            <button class="modal-close" onclick="closeModal('modal-weight-override')" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form method="post" asp-controller="Admin" asp-action="PerformWeightOverride">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderId" id="override-order-id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Order Number</label>
+                    <input type="text" class="form-input" id="override-order-display" readonly style="background:var(--lh-bg-subtle);" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estimated Weight (kg)</label>
+                    <input type="number" step="0.01" name="EstimatedWeight" id="override-estimated-weight" class="form-input" required min="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Calculation Method</label>
+                    <input type="text" name="EstimatedWeightMethod" class="form-input" placeholder="e.g. Standard load average / Visual inspection" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Business Justification / Reason</label>
+                    <textarea name="WeightOverrideReason" class="form-input" rows="3" placeholder="Reason for override after expired extension & contact attempts..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Supervisor Approval (Admin / Manager)</label>
+                    <select name="SupervisorId" class="form-input" required>
+                        <option value="">Select approving supervisor...</option>
+                        @foreach (var sup in Model.AvailableSupervisors)
+                        {
+                            <option value="@sup.Id">@sup.FullName (@sup.Email)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-weight-override')">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background:#7C3AED;border-color:#7C3AED;">Apply Weight Override</button>
+            </div>
+        </form>
+    </div>
+</div>
+@if (canViewDispatchMap) {
+    <!-- MapLibre GL JS & SignalR Client for Phase 2F Live Dispatch Map -->
+    <script src="~/lib/maplibre-gl/maplibre-gl.js"></script>
+    <script src="~/lib/signalr.min.js"></script>
+    <script>
+        (function () {
+            const DISPATCH_MAP_CONFIG = {
+                tileUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mapSettings.TileUrl)),
+                attribution: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mapSettings.Attribution)),
+                initialLat: @mapSettings.InitialLatitude,
+                initialLng: @mapSettings.InitialLongitude,
+                initialZoom: @mapSettings.InitialZoom
+            };
+
+            let dispatchMap = null;
+            let dispatchConnection = null;
+            let riderMarkers = {};
+            let orderMarkers = {};
+            let staleCheckInterval = null;
+
+            window.initDispatchMap = function () {
+                const mapEl = document.getElementById('dispatchMap');
+                if (!mapEl) return;
+
+                if (!dispatchMap) {
+                    try {
+                        dispatchMap = new maplibregl.Map({
+                            container: 'dispatchMap',
+                            style: {
+                                version: 8,
+                                sources: {
+                                    'osm': {
+                                        type: 'raster',
+                                        tiles: [DISPATCH_MAP_CONFIG.tileUrl],
+                                        tileSize: 256,
+                                        attribution: DISPATCH_MAP_CONFIG.attribution
+                                    }
+                                },
+                                layers: [{
+                                    id: 'osm-layer',
+                                    type: 'raster',
+                                    source: 'osm',
+                                    minzoom: 0,
+                                    maxzoom: 19
+                                }]
+                            },
+                            center: [DISPATCH_MAP_CONFIG.initialLng, DISPATCH_MAP_CONFIG.initialLat],
+                            zoom: DISPATCH_MAP_CONFIG.initialZoom
+                        });
+
+                        dispatchMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+                        dispatchMap.on('load', function () {
+                            dispatchMap.resize();
+                        });
+                    } catch (err) {
+                        console.error('[DispatchMap] Failed to initialize MapLibre map:', err);
+                        setDispatchStatus('offline', 'Map load error');
+                        return;
+                    }
+                } else {
+                    setTimeout(function () {
+                        if (dispatchMap) dispatchMap.resize();
+                    }, 100);
+                }
+
+                if (!dispatchConnection) {
+                    connectDispatchSignalR();
+                } else {
+                    fetchActiveDispatchData();
+                }
+
+                if (!staleCheckInterval) {
+                    staleCheckInterval = setInterval(checkStaleMarkers, 15000);
+                }
+            };
+
+            window.refreshDispatchMap = function () {
+                fetchActiveDispatchData();
+            };
+
+            async function connectDispatchSignalR() {
+                try {
+                    setDispatchStatus('offline', 'Connecting SignalR...');
+                    dispatchConnection = new signalR.HubConnectionBuilder()
+                        .withUrl('/orderHub')
+                        .withAutomaticReconnect([2000, 5000, 10000, 30000])
+                        .configureLogging(signalR.LogLevel.Warning)
+                        .build();
+
+                    dispatchConnection.on('RiderLocationUpdated', function (payload) {
+                        if (!payload || !payload.riderId || !payload.orderId) return;
+                        handleLiveLocationUpdate(payload);
+                    });
+
+                    dispatchConnection.onreconnecting(function () {
+                        setDispatchStatus('stale', 'Reconnecting...');
+                    });
+
+                    dispatchConnection.onreconnected(async function () {
+                        setDispatchStatus('live', 'Reconnected');
+                        try {
+                            await dispatchConnection.invoke('JoinDispatchGroup');
+                        } catch (e) {
+                            console.error('[DispatchMap] Rejoin error:', e);
+                        }
+                        fetchActiveDispatchData();
+                    });
+
+                    dispatchConnection.onclose(function () {
+                        setDispatchStatus('offline', 'Disconnected');
+                    });
+
+                    await dispatchConnection.start();
+                    const joined = await dispatchConnection.invoke('JoinDispatchGroup');
+                    if (joined) {
+                        setDispatchStatus('live', 'Live Dispatch Online');
+                    } else {
+                        setDispatchStatus('offline', 'Unauthorized for dispatch');
+                    }
+
+                    await fetchActiveDispatchData();
+                } catch (err) {
+                    console.error('[DispatchMap] SignalR connection failed:', err);
+                    setDispatchStatus('stale', 'SignalR offline · Polling');
+                    await fetchActiveDispatchData();
+                }
+            }
+
+            async function fetchActiveDispatchData() {
+                try {
+                    const res = await fetch('/Admin/GetActiveRiderLocations', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) {
+                        if (res.status === 403 || res.status === 401) {
+                            setDispatchStatus('offline', 'Access restricted');
+                        }
+                        return;
+                    }
+                    const json = await res.json();
+                    if (json && json.success && Array.isArray(json.data)) {
+                        syncActiveRiders(json.data);
+                    }
+                } catch (err) {
+                    console.error('[DispatchMap] Error fetching active riders:', err);
+                }
+            }
+
+            function syncActiveRiders(activeList) {
+                const activeKeys = new Set();
+                const activeOrderIds = new Set();
+
+                activeList.forEach(function (item) {
+                    const key = item.riderId + '_' + item.orderId;
+                    activeKeys.add(key);
+                    activeOrderIds.add(item.orderId);
+
+                    const hasCoords = item.latitude != null && item.longitude != null;
+                    const isStale = item.updatedAt ? ((Date.now() - new Date(item.updatedAt).getTime()) > 120000) : true;
+
+                    if (riderMarkers[key]) {
+                        const entry = riderMarkers[key];
+                        entry.data = item;
+                        if (hasCoords) {
+                            entry.marker.setLngLat([item.longitude, item.latitude]);
+                            updateRiderMarkerVisual(entry.riderEl, isStale);
+                            entry.marker.setPopup(createRiderPopup(item, isStale));
+                        }
+                    } else if (hasCoords) {
+                        const markerObj = createRiderMarker(item, isStale);
+                        riderMarkers[key] = {
+                            marker: markerObj.marker,
+                            riderEl: markerObj.element,
+                            data: item
+                        };
+                    }
+
+                    if (item.orderLatitude != null && item.orderLongitude != null) {
+                        if (!orderMarkers[item.orderId]) {
+                            orderMarkers[item.orderId] = createOrderMarker(item);
+                        }
+                    }
+                });
+
+                Object.keys(riderMarkers).forEach(function (key) {
+                    if (!activeKeys.has(key)) {
+                        riderMarkers[key].marker.remove();
+                        delete riderMarkers[key];
+                    }
+                });
+
+                Object.keys(orderMarkers).forEach(function (orderId) {
+                    if (!activeOrderIds.has(parseInt(orderId, 10))) {
+                        orderMarkers[orderId].remove();
+                        delete orderMarkers[orderId];
+                    }
+                });
+
+                updateRiderCountDisplay(activeList.length);
+                fitDispatchMapBounds();
+            }
+
+            function handleLiveLocationUpdate(payload) {
+                const key = payload.riderId + '_' + payload.orderId;
+                const isStale = payload.updatedAt ? ((Date.now() - new Date(payload.updatedAt).getTime()) > 120000) : false;
+
+                if (riderMarkers[key]) {
+                    const entry = riderMarkers[key];
+                    entry.data.latitude = payload.latitude;
+                    entry.data.longitude = payload.longitude;
+                    entry.data.updatedAt = payload.updatedAt;
+                    entry.marker.setLngLat([payload.longitude, payload.latitude]);
+                    updateRiderMarkerVisual(entry.riderEl, isStale);
+                    entry.marker.setPopup(createRiderPopup(entry.data, isStale));
+                } else {
+                    fetchActiveDispatchData();
+                }
+            }
+
+            function createRiderMarker(item, isStale) {
+                const el = document.createElement('div');
+                el.className = 'dispatch-rider-marker ' + (isStale ? 'is-stale' : 'is-live');
+                el.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>';
+                el.title = (item.riderName || 'Rider') + ' (' + (item.orderNumber || '') + ')';
+
+                const marker = new maplibregl.Marker({ element: el })
+                    .setLngLat([item.longitude, item.latitude])
+                    .setPopup(createRiderPopup(item, isStale))
+                    .addTo(dispatchMap);
+
+                return { marker: marker, element: el };
+            }
+
+            function updateRiderMarkerVisual(el, isStale) {
+                if (!el) return;
+                el.classList.remove('is-live', 'is-stale', 'is-waiting');
+                el.classList.add(isStale ? 'is-stale' : 'is-live');
+            }
+
+            function createRiderPopup(item, isStale) {
+                const updatedText = item.updatedAt
+                    ? new Date(item.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    : 'Unknown';
+                const legLabel = item.trackingType === 'delivery' ? 'Delivery Leg' : 'Pickup Leg';
+                const statusBadge = isStale
+                    ? '<span style="color:#B45309;font-weight:700;">STALE (>2m ago)</span>'
+                    : '<span style="color:#059669;font-weight:700;">LIVE</span>';
+
+                const html = `
+                    <div class="dispatch-popup">
+                        <div class="dispatch-popup-title">${escapeHtml(item.riderName || 'Rider')}</div>
+                        <div class="dispatch-popup-row"><strong>Order:</strong> ${escapeHtml(item.orderNumber || '')}</div>
+                        <div class="dispatch-popup-row"><strong>Leg:</strong> ${legLabel}</div>
+                        <div class="dispatch-popup-row"><strong>Stage:</strong> ${escapeHtml(item.status || '')}</div>
+                        <div class="dispatch-popup-row"><strong>Signal:</strong> ${statusBadge} (${updatedText})</div>
+                    </div>`;
+
+                return new maplibregl.Popup({ offset: 24 }).setHTML(html);
+            }
+
+            function createOrderMarker(item) {
+                const el = document.createElement('div');
+                const isDel = item.trackingType === 'delivery';
+                el.className = 'dispatch-order-marker ' + (isDel ? 'is-delivery' : 'is-pickup');
+                el.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+                el.title = (isDel ? 'Delivery Destination: ' : 'Pickup Location: ') + item.orderNumber;
+
+                const popupHtml = `
+                    <div class="dispatch-popup">
+                        <div class="dispatch-popup-title">${isDel ? 'Delivery Address' : 'Pickup Location'}</div>
+                        <div class="dispatch-popup-row"><strong>Order:</strong> ${escapeHtml(item.orderNumber)}</div>
+                    </div>`;
+
+                return new maplibregl.Marker({ element: el })
+                    .setLngLat([item.orderLongitude, item.orderLatitude])
+                    .setPopup(new maplibregl.Popup({ offset: 20 }).setHTML(popupHtml))
+                    .addTo(dispatchMap);
+            }
+
+            function checkStaleMarkers() {
+                const now = Date.now();
+                Object.values(riderMarkers).forEach(function (entry) {
+                    if (!entry.data || !entry.data.updatedAt) return;
+                    const isStale = (now - new Date(entry.data.updatedAt).getTime()) > 120000;
+                    updateRiderMarkerVisual(entry.riderEl, isStale);
+                    entry.marker.setPopup(createRiderPopup(entry.data, isStale));
+                });
+            }
+
+            function fitDispatchMapBounds() {
+                if (!dispatchMap) return;
+                const bounds = new maplibregl.LngLatBounds();
+                let count = 0;
+
+                Object.values(riderMarkers).forEach(function (entry) {
+                    if (entry.data && entry.data.longitude != null && entry.data.latitude != null) {
+                        bounds.extend([entry.data.longitude, entry.data.latitude]);
+                        count++;
+                    }
+                });
+
+                Object.values(orderMarkers).forEach(function (marker) {
+                    bounds.extend(marker.getLngLat());
+                    count++;
+                });
+
+                if (count > 0 && !bounds.isEmpty()) {
+                    dispatchMap.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 800 });
+                } else {
+                    dispatchMap.flyTo({ center: [DISPATCH_MAP_CONFIG.initialLng, DISPATCH_MAP_CONFIG.initialLat], zoom: DISPATCH_MAP_CONFIG.initialZoom });
+                }
+            }
+
+            function setDispatchStatus(state, label) {
+                const dot = document.getElementById('dispatchDot');
+                const text = document.getElementById('dispatchStatusText');
+                if (!dot || !text) return;
+
+                dot.className = 'dispatch-dot';
+                if (state === 'live') dot.classList.add('dot-live');
+                else if (state === 'stale') dot.classList.add('dot-stale');
+                else dot.classList.add('dot-offline');
+
+                text.textContent = label;
+            }
+
+            function updateRiderCountDisplay(count) {
+                const pill = document.getElementById('dispatchRidersPill');
+                const text = document.getElementById('dispatchRidersCount');
+                if (!pill || !text) return;
+
+                pill.style.display = 'inline-flex';
+                if (count === 0) {
+                    text.textContent = 'No active rider tracking';
+                } else if (count === 1) {
+                    text.textContent = '1 active rider tracked';
+                } else {
+                    text.textContent = count + ' active riders tracked';
+                }
+            }
+
+            function cleanup() {
+                if (staleCheckInterval) {
+                    clearInterval(staleCheckInterval);
+                    staleCheckInterval = null;
+                }
+                if (dispatchConnection) {
+                    try {
+                        dispatchConnection.invoke('LeaveDispatchGroup').catch(function () {});
+                        dispatchConnection.stop().catch(function () {});
+                    } catch (_) {}
+                    dispatchConnection = null;
+                }
+            }
+
+            window.addEventListener('beforeunload', cleanup);
+        })();
+    </script>
+}
 </body>
 </html>

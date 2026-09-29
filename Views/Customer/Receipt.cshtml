@@ -1,0 +1,68 @@
+@model LaundryHub2._0.Models.PaymentReceiptViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = $"Receipt {Model.Order.OrderNumber} | Laundry Hub Davao City";
+    string Manila(object? dt)
+    {
+        if (dt is not DateTime d) return "—";
+        TimeZoneInfo tz;
+        try { tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Manila"); }
+        catch { try { tz = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"); } catch { tz = TimeZoneInfo.Utc; } }
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(d, DateTimeKind.Utc), tz).ToString("MMMM dd, yyyy hh:mm tt");
+    }
+    var svcList = string.Join(", ", Model.Order.OrderServices.Select(os => os.Service != null ? os.Service.Name : "?"));
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F1F5F9; color: #1E293B; margin: 0; padding: 24px 16px; }
+        .receipt { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.08); overflow: hidden; }
+        .receipt-head { background: #1D4ED8; color: #fff; padding: 20px 24px; }
+        .receipt-head h1 { margin: 0; font-size: 1.25rem; }
+        .receipt-head p { margin: 4px 0 0; font-size: .8125rem; opacity: .9; }
+        .paid-badge { display: inline-block; margin-top: 10px; background: #10B981; color: #fff; font-weight: 800; font-size: .8125rem; padding: 4px 12px; border-radius: 999px; }
+        .receipt-body { padding: 20px 24px; }
+        .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px dashed #E2E8F0; font-size: .875rem; }
+        .row span:first-child { color: #64748B; }
+        .row span:last-child { font-weight: 600; text-align: right; }
+        .row.total { border-bottom: none; font-size: 1rem; }
+        .row.total span:last-child { color: #1D4ED8; font-size: 1.125rem; font-weight: 800; }
+        .actions { display: flex; gap: 10px; padding: 16px 24px 22px; flex-wrap: wrap; }
+        .btn { flex: 1; min-width: 140px; text-align: center; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: .875rem; text-decoration: none; cursor: pointer; border: 1px solid #CBD5E1; background: #fff; color: #1D4ED8; }
+        .btn-primary { background: #1D4ED8; border-color: #1D4ED8; color: #fff; }
+        @@media print { body { background: #fff; padding: 0; } .actions { display: none; } .receipt { box-shadow: none; } }
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="receipt-head">
+            <h1>Laundry Hub Davao City</h1>
+            <p>Official payment receipt — generated only after verified payment.</p>
+            <span class="paid-badge">✓ PAID</span>
+        </div>
+        <div class="receipt-body">
+            <div class="row"><span>Order number</span><span>@Model.Order.OrderNumber</span></div>
+            <div class="row"><span>Customer</span><span>@Model.CustomerName</span></div>
+            <div class="row"><span>Laundry services</span><span>@(string.IsNullOrEmpty(svcList) ? "—" : svcList)</span></div>
+            <div class="row"><span>Weight</span><span>@(Model.Order.WeightKg.HasValue ? $"{Model.Order.WeightKg.Value:N2} kg" : "—")</span></div>
+            <div class="row"><span>Payment date (Manila)</span><span>@Manila(Model.Order.PaymentConfirmedAt)</span></div>
+            <div class="row"><span>Payment method</span><span>PayMongo hosted checkout (card / e-wallet)</span></div>
+            <div class="row"><span>PayMongo reference</span><span style="font-family:monospace;font-size:.75rem;">@(Model.Order.PayMongoPaymentId ?? "—")</span></div>
+            <div class="row"><span>Pickup</span><span>@Model.Order.PickupLocation (@Model.Order.PreferredPickupDate.ToString("MMM dd, yyyy"))</span></div>
+            <div class="row"><span>Base amount</span><span>₱@Model.BaseAmount.ToString("N2")</span></div>
+            <div class="row"><span>Late penalty</span><span>₱@Model.PenaltyAmount.ToString("N2")</span></div>
+            <div class="row"><span>Loyalty discount</span><span>−₱@Model.LoyaltyDiscount.ToString("N2")</span></div>
+            <div class="row total"><span>Amount paid</span><span>₱@Model.NetPaid.ToString("N2")</span></div>
+        </div>
+        <div class="actions">
+            <a class="btn btn-primary" href="@Url.Action("Index", "Customer", new { tab = "tracking", order = Model.Order.Id })">Track Order</a>
+            <a class="btn" href="@Url.Action("Index", "Customer", new { tab = "payment" })">Back to Payments</a>
+            <button class="btn" type="button" onclick="window.print()">Print</button>
+        </div>
+    </div>
+</body>
+</html>

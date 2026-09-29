@@ -1,0 +1,3 @@
+# This directory stores order photo uploads.
+# Sub-folders are created per order: uploads/orders/{orderId}/
+# Files: pickup.jpg, weight.jpg, delivery.jpg

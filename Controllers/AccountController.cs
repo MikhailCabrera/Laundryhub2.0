@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using LaundryHub2._0.Models;
 
 namespace LaundryHub2._0.Controllers;
@@ -9,13 +10,16 @@ public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        ILogger<AccountController> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -34,6 +38,7 @@ public class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("auth-policy")]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         ViewData["ReturnUrl"] = model.ReturnUrl;
@@ -50,8 +55,8 @@ public class AccountController : Controller
         }
         catch (Exception ex)
         {
-            var msg = ex.InnerException != null ? $"{ex.Message} -> {ex.InnerException.Message}" : ex.Message;
-            ModelState.AddModelError(string.Empty, $"Database error: {msg}");
+            _logger.LogError(ex, "Database error during login lookup for email {Email}", model.Email);
+            ModelState.AddModelError(string.Empty, "We couldn't complete the login right now. Please try again later.");
             return View(model);
         }
 
@@ -78,7 +83,7 @@ public class AccountController : Controller
             user.UserName ?? user.Email!,
             model.Password,
             model.RememberMe,
-            lockoutOnFailure: false);
+            lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
@@ -87,6 +92,13 @@ public class AccountController : Controller
                 return Redirect(model.ReturnUrl);
             }
             return await RedirectToDashboardAsync(user);
+        }
+
+        if (result.IsLockedOut)
+        {
+            _logger.LogWarning("User account locked out for email {Email}", model.Email);
+            ModelState.AddModelError(string.Empty, "This account is temporarily locked due to multiple failed login attempts. Please try again in 15 minutes.");
+            return View(model);
         }
 
         ModelState.AddModelError(string.Empty, "Invalid email or password.");
@@ -108,6 +120,7 @@ public class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("auth-policy")]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid)

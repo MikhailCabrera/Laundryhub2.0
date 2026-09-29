@@ -35,6 +35,12 @@ namespace LaundryHub2._0.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<decimal?>("CurrentLatitude")
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<decimal?>("CurrentLongitude")
+                        .HasColumnType("decimal(11,8)");
+
                     b.Property<string>("District")
                         .HasColumnType("longtext");
 
@@ -54,6 +60,9 @@ namespace LaundryHub2._0.Migrations
 
                     b.Property<bool>("IsSuspended")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LastLocationUpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -101,6 +110,126 @@ namespace LaundryHub2._0.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("AdminName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("TargetRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TargetUser")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.Claim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ReporterIsStaff")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ReporterName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("Claims");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.CustomerNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AuthorUserId")
+                        .IsRequired()
+                        .HasMaxLength(85)
+                        .HasColumnType("varchar(85)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(85)
+                        .HasColumnType("varchar(85)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorUserId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("CustomerNotes");
                 });
 
             modelBuilder.Entity("LaundryHub2._0.Models.InventoryItem", b =>
@@ -195,6 +324,9 @@ namespace LaundryHub2._0.Migrations
                     b.Property<decimal?>("AccruedPenaltyAmount")
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<DateTime?>("AwaitingPaymentAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ContactNumber")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -228,6 +360,12 @@ namespace LaundryHub2._0.Migrations
                     b.Property<DateTime?>("DryingStartedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("EstimatedWeightMethod")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("GracePeriodEndAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<bool>("IsAbandoned")
                         .HasColumnType("tinyint(1)");
 
@@ -238,6 +376,9 @@ namespace LaundryHub2._0.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("int");
 
                     b.Property<string>("PayMongoCheckoutUrl")
                         .HasMaxLength(1000)
@@ -257,13 +398,22 @@ namespace LaundryHub2._0.Migrations
                     b.Property<DateTime?>("PaymentConfirmedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("PaymentDeadlineAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("PickedUpAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<decimal?>("PickupLatitude")
+                        .HasColumnType("decimal(10,8)");
 
                     b.Property<string>("PickupLocation")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
+
+                    b.Property<decimal?>("PickupLongitude")
+                        .HasColumnType("decimal(11,8)");
 
                     b.Property<string>("PickupPhotoPath")
                         .HasMaxLength(500)
@@ -287,7 +437,18 @@ namespace LaundryHub2._0.Migrations
                     b.Property<DateTime?>("ReadyForDeliveryNotifiedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<decimal?>("RefundAmount")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("RiderAssignedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("SpecialInstructions")
@@ -314,11 +475,35 @@ namespace LaundryHub2._0.Migrations
                     b.Property<DateTime?>("WashingStartedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("WeightConfirmationDeadline")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("WeightConfirmationExtensionDeadline")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("WeightConfirmedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("WeightConfirmedByCustomerAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal?>("WeightKg")
                         .HasColumnType("decimal(8,2)");
+
+                    b.Property<DateTime?>("WeightOverrideApprovedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("WeightOverrideAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("WeightOverrideByStaffId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("WeightOverrideReason")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("WeightOverrideSupervisorId")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("WeightPhotoPath")
                         .HasMaxLength(500)
@@ -330,9 +515,25 @@ namespace LaundryHub2._0.Migrations
 
                     b.HasIndex("DeliveryRiderId");
 
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
                     b.HasIndex("PickupRiderId");
 
                     b.ToTable("LaundryOrders");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.LaundryOrderSequence", b =>
+                {
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("NextSeq")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrderDate");
+
+                    b.ToTable("LaundryOrderSequences");
                 });
 
             modelBuilder.Entity("LaundryHub2._0.Models.LaundryOrderService", b =>
@@ -370,6 +571,9 @@ namespace LaundryHub2._0.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
+                    b.Property<decimal>("DetergentMlPerKg")
+                        .HasColumnType("decimal(8,2)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
@@ -381,9 +585,105 @@ namespace LaundryHub2._0.Migrations
                     b.Property<decimal>("PricePerKg")
                         .HasColumnType("decimal(8,2)");
 
+                    b.Property<bool>("RequiresDrying")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("RequiresWashing")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("SoftenerMlPerKg")
+                        .HasColumnType("decimal(8,2)");
+
                     b.HasKey("Id");
 
                     b.ToTable("LaundryServices");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.LoyaltyTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(85)
+                        .HasColumnType("varchar(85)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyTransactions");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RecipientUserId")
+                        .IsRequired()
+                        .HasMaxLength(85)
+                        .HasColumnType("varchar(85)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -522,6 +822,36 @@ namespace LaundryHub2._0.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LaundryHub2._0.Models.Claim", b =>
+                {
+                    b.HasOne("LaundryHub2._0.Models.LaundryOrder", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.CustomerNote", b =>
+                {
+                    b.HasOne("LaundryHub2._0.Models.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LaundryHub2._0.Models.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("LaundryHub2._0.Models.InventoryTransaction", b =>
                 {
                     b.HasOne("LaundryHub2._0.Models.InventoryItem", "Item")
@@ -582,6 +912,42 @@ namespace LaundryHub2._0.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.LoyaltyTransaction", b =>
+                {
+                    b.HasOne("LaundryHub2._0.Models.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LaundryHub2._0.Models.LaundryOrder", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("LaundryHub2._0.Models.Notification", b =>
+                {
+                    b.HasOne("LaundryHub2._0.Models.LaundryOrder", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LaundryHub2._0.Models.ApplicationUser", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("RecipientUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

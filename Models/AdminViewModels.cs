@@ -14,6 +14,7 @@ public class AdminDashboardViewModel
     public List<CustomerNote> CustomerNotes { get; set; } = new();
     public List<LoyaltyTransaction> LoyaltyTransactions { get; set; } = new();
     public List<Claim> Claims { get; set; } = new();
+    public List<ApplicationUser> AvailableSupervisors { get; set; } = new();
 
     public int PendingOrdersCount => Orders.Count(o => o.Status == OrderStatus.Pending);
 
@@ -191,6 +192,20 @@ public class RefundOrderInputModel
     public int OrderId { get; set; }
 }
 
+public class SendDormantPromoInputModel
+{
+    [Required(ErrorMessage = "Select at least one customer.")]
+    public List<string> CustomerIds { get; set; } = new();
+
+    [Required(ErrorMessage = "Promo title is required.")]
+    [StringLength(150, MinimumLength = 1, ErrorMessage = "Title must be 1-150 characters.")]
+    public string Title { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Promo body is required.")]
+    [StringLength(1000, MinimumLength = 1, ErrorMessage = "Body must be 1-1000 characters.")]
+    public string Body { get; set; } = string.Empty;
+}
+
 public class FileClaimInputModel
 {
     [Required(ErrorMessage = "Order number is required.")]
@@ -215,4 +230,44 @@ public class ResolveClaimInputModel
     [Required(ErrorMessage = "Resolution note is required.")]
     [StringLength(500, MinimumLength = 1, ErrorMessage = "Resolution note must be 1-500 characters.")]
     public string ResolutionNote { get; set; } = string.Empty;
+}
+
+public class ExtendWeightConfirmationDeadlineInputModel
+{
+    [Required]
+    public int OrderId { get; set; }
+
+    [Required(ErrorMessage = "New deadline is required.")]
+    public DateTime NewDeadline { get; set; }
+}
+
+public class RecordContactAttemptInputModel
+{
+    [Required]
+    public int OrderId { get; set; }
+
+    [Required(ErrorMessage = "Contact method is required.")]
+    public string ContactMethod { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Contact outcome details are required.")]
+    public string Outcome { get; set; } = string.Empty;
+}
+
+public class WeightOverrideInputModel
+{
+    [Required]
+    public int OrderId { get; set; }
+
+    [Required(ErrorMessage = "Estimated weight is required.")]
+    [Range(0.01, 1000, ErrorMessage = "Estimated weight must be greater than 0.")]
+    public decimal EstimatedWeight { get; set; }
+
+    [Required(ErrorMessage = "Calculation method is required.")]
+    public string EstimatedWeightMethod { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Business justification is required.")]
+    public string WeightOverrideReason { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Supervisor approval is required.")]
+    public string SupervisorId { get; set; } = string.Empty;
 }

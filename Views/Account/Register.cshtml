@@ -873,6 +873,23 @@
                         <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
                     </div>
 
+                    <!-- Covered district (optional, validated against coverage) -->
+                    <div class="form-group">
+                        <label asp-for="District" class="form-label">District (covered Davao City zone)</label>
+                        <select asp-for="District" class="form-input">
+                            <option value="">Select your district (optional)</option>
+                            <option value="Poblacion">Poblacion — daily pickup</option>
+                            <option value="Talomo">Talomo — daily pickup</option>
+                            <option value="Agdao">Agdao — daily pickup</option>
+                            <option value="Buhangin">Buhangin — daily pickup</option>
+                            <option value="Bunawan">Bunawan — Mon, Wed, Fri &amp; Sat</option>
+                            <option value="Toril">Toril — daily pickup</option>
+                            <option value="Tugbok">Tugbok — Mon, Tue, Thu &amp; Sat</option>
+                            <option value="Calinan">Calinan — Tue, Thu &amp; Sat</option>
+                        </select>
+                        <span asp-validation-for="District" class="field-validation-error"></span>
+                    </div>
+
                     <!-- Password and Confirm Password -->
                     <div class="form-row">
                         <div class="form-group">
@@ -902,7 +919,7 @@
 
                     <!-- Terms Notice -->
                     <p class="terms-notice">
-                        By creating an account, you agree to Laundry Hub's <a href="/Terms" target="_blank">Terms of Service</a> and acknowledge our 24h pickup & payment policies.
+                        By creating an account, you agree to Laundry Hub's <a href="/Terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and acknowledge our 24h pickup & payment policies.
                     </p>
 
                     <!-- Submit Button -->
@@ -916,7 +933,7 @@
 
                     <!-- Already have an account link at the BOTTOM -->
                     <div class="auth-switch-bottom">
-                        Already have an account? <a href="/Account/Login">Log in</a>
+                        Already have an account? <a href="/Account/Login@(Context.Request.Query.TryGetValue("returnUrl", out var _ru) ? "?returnUrl=" + Uri.EscapeDataString(_ru.ToString()) : "")">Log in</a>
                     </div>
                 </form>
             </div>

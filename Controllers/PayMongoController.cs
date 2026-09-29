@@ -135,7 +135,13 @@ public class PayMongoController : Controller
         }
 
         var now = DateTime.UtcNow;
-        OrderPaymentConfirmation.ApplyConfirmedPayment(order, now);
+        var applied = OrderPaymentConfirmation.ApplyConfirmedPayment(order, now);
+        if (!applied)
+        {
+            _logger.LogWarning("PayMongo webhook event {EventId} for order {OrderNumber}: ApplyConfirmedPayment declined (status={Status}).",
+                eventId, order.OrderNumber, order.Status);
+            return Json(new { received = true });
+        }
         order.PayMongoWebhookEventId = eventId;
         order.PayMongoWebhookReceivedAt = now;
         AuditTrail.Record(_context, "PayMongo webhook", AuditTrail.Payment, order.Customer?.FullName ?? "Unknown", "Customer", $"Order {order.OrderNumber} paid via webhook event {eventId}.");
