@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] | Laundry Hub Davao City</title>
+    <meta name="description" content="Laundry Hub is Davao City's premier laundry pickup and delivery service. Clean, fresh clothes washed by the kilo and delivered to your doorstep. Serving Poblacion, Talomo, Buhangin, Toril, and more." />
+    
+    <!-- Google Fonts: Plus Jakarta Sans for Headlines, Inter for Body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- Sticky Top Navigation -->
+    <header class="lh-header" id="navbar">
+        <div class="lh-nav-container">
+            <a href="#top" class="lh-brand" aria-label="Laundry Hub Davao Home">
+                <div class="lh-logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM7.5 17.5C6.67 17.5 6 16.83 6 16C6 15.17 6.67 14.5 7.5 14.5C8.33 14.5 9 15.17 9 16C9 16.83 8.33 17.5 7.5 17.5ZM12 17.5C11.17 17.5 10.5 16.83 10.5 16C10.5 15.17 11.17 14.5 12 14.5C12.83 14.5 13.5 15.17 13.5 16C13.5 16.83 12.83 17.5 12 17.5ZM16.5 17.5C15.67 17.5 15 16.83 15 16C15 15.17 15.67 14.5 16.5 14.5C17.33 14.5 18 15.17 18 16C18 16.83 17.33 17.5 16.5 17.5ZM17.2 11.8C16.88 12.28 16.34 12.56 15.77 12.56H8.23C7.66 12.56 7.12 12.28 6.8 11.8L5.35 9.63C4.9 8.95 5.39 8.04 6.2 8.04H17.8C18.61 8.04 19.1 8.95 18.65 9.63L17.2 11.8Z" fill="currentColor"/>
+                        <circle cx="17" cy="5" r="2.5" fill="#60A5FA"/>
+                    </svg>
+                </div>
+                <div class="lh-brand-text">
+                    <span class="lh-brand-title">Laundry Hub</span>
+                    <span class="lh-brand-tag">Davao City</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <nav class="lh-nav-menu" id="navMenu" aria-label="Main Navigation">
+                <a href="#how-it-works" class="lh-nav-link">How it works</a>
+                <a href="#pricing" class="lh-nav-link">Pricing</a>
+                <a href="#service-area" class="lh-nav-link">Service area</a>
+                <a href="#reviews" class="lh-nav-link">Reviews</a>
+            </nav>
+
+            <!-- Standard Always-Visible Action Buttons -->
+            <div class="lh-nav-actions">
+                <a href="/Account/Login" class="lh-btn lh-btn-secondary" id="navLoginLink">Log in</a>
+                <a href="/Account/Register" class="lh-btn lh-btn-primary" id="navSignupLink">Sign up</a>
+                
+                <!-- Mobile Menu Toggle Button -->
+                <button type="button" class="lh-menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navMenu" aria-label="Toggle navigation menu">
+                    <svg class="lh-icon-hamburger" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    <svg class="lh-icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main role="main" id="top">
+        @RenderBody()
+    </main>
+
+    <!-- Notification Toast -->
+    <div class="lh-toast" id="lhToast" role="status" aria-live="polite" hidden>
+        <div class="lh-toast-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="lh-toast-message" id="toastMessage">Action completed successfully!</div>
+        <button type="button" class="lh-toast-close" id="toastClose" aria-label="Close notification">&times;</button>
+    </div>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

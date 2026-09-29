@@ -1,0 +1,1850 @@
+@model LaundryHub2._0.Models.CustomerDashboardViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Customer Portal | Laundry Hub Davao City";
+    var activeTab = ViewData["ActiveTab"] as string ?? "dashboard";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <meta name="description" content="Laundry Hub Customer Portal — Book pickups, track orders, view verified weights, and manage payments." />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Palette: Deep Navy & Royal Blue */
+            --lh-navy-950: #071324;
+            --lh-navy-900: #0B1E36;
+            --lh-navy-800: #102A4C;
+            --lh-navy-700: #163865;
+            --lh-blue-600: #1D4ED8;
+            --lh-blue-500: #1E60D5;
+            --lh-blue-400: #3B82F6;
+            --lh-blue-300: #60A5FA;
+            --lh-blue-200: #93C5FD;
+            --lh-blue-100: #BFDBFE;
+            --lh-blue-50:  #EBF3FE;
+            --lh-blue-25:  #F4F8FE;
+            --lh-blue-10:  #F8FAFD;
+
+            --lh-white: #FFFFFF;
+            --lh-text-headings: #0B1E36;
+            --lh-text-body: #334E68;
+            --lh-text-muted: #627D98;
+            --lh-border-light: #D8E6F8;
+            --lh-border-subtle: #E2EDFA;
+            --lh-border-focus: #1E60D5;
+
+            --c-active: #10B981;
+            --c-active-bg: #ECFDF5;
+            --c-active-border: #A7F3D0;
+            --c-warning: #F59E0B;
+            --c-warning-bg: #FFFBEB;
+            --c-warning-border: #FDE68A;
+            --c-danger: #EF4444;
+            --c-danger-bg: #FEF2F2;
+            --c-danger-border: #FECACA;
+
+            --lh-font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --lh-font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+            --sidebar-width: 290px;
+            --lh-shadow-sm: 0 2px 6px rgba(16, 42, 76, 0.04);
+            --lh-shadow-md: 0 8px 24px rgba(16, 42, 76, 0.08);
+            --lh-shadow-lg: 0 16px 36px rgba(16, 42, 76, 0.12);
+            --lh-transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            --lh-radius-sm: 6px;
+            --lh-radius-md: 10px;
+            --lh-radius-lg: 16px;
+            --lh-radius-xl: 24px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+            background-color: var(--lh-blue-10);
+        }
+
+        body {
+            font-family: var(--lh-font-body);
+            color: var(--lh-text-body);
+            background-color: var(--lh-blue-10);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .customer-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ==========================================================================
+           SIDEBAR
+           ========================================================================== */
+        .customer-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--lh-navy-900);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 4px 0 24px rgba(7, 19, 36, 0.18);
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 28px 22px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-decoration: none;
+        }
+
+        .sidebar-logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--lh-blue-500) 0%, var(--lh-blue-400) 100%);
+            border-radius: var(--lh-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--lh-white);
+            box-shadow: 0 4px 12px rgba(30, 96, 213, 0.35);
+        }
+
+        .sidebar-brand-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-wordmark {
+            font-family: var(--lh-font-heading);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--lh-white);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 20px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: var(--lh-blue-300);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            width: fit-content;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 10px 14px 6px;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--lh-radius-md);
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            transition: var(--lh-transition);
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .sidebar-nav-item svg {
+            width: 20px;
+            height: 20px;
+            color: rgba(255, 255, 255, 0.45);
+            transition: var(--lh-transition);
+        }
+
+        .sidebar-nav-item:hover {
+            background-color: rgba(59, 130, 246, 0.12);
+            color: var(--lh-white);
+        }
+
+        .sidebar-nav-item:hover svg {
+            color: var(--lh-blue-300);
+        }
+
+        .sidebar-nav-item.active {
+            background: linear-gradient(90deg, rgba(30, 96, 213, 0.28) 0%, rgba(59, 130, 246, 0.12) 100%);
+            color: var(--lh-white);
+            border-left: 3px solid var(--lh-blue-400);
+        }
+
+        .sidebar-nav-item.active svg {
+            color: var(--lh-blue-300);
+        }
+
+        /* Sidebar Footer (Customer Info & Logout) */
+        .sidebar-footer {
+            padding: 18px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: rgba(7, 19, 36, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-profile-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .user-avatar-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--lh-blue-600) 0%, var(--lh-blue-400) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--lh-white);
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .user-text-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .user-display-name {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--lh-white);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email-text {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.45);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-form button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.45);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--lh-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--lh-transition);
+        }
+
+        .logout-form button:hover {
+            color: var(--c-danger);
+            background-color: rgba(239, 68, 68, 0.15);
+        }
+
+        /* ==========================================================================
+           MAIN CONTENT AREA
+           ========================================================================== */
+        .customer-main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 36px 44px;
+            min-height: 100vh;
+        }
+
+        .content-panel {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+            animation: panelFade 0.22s ease;
+        }
+
+        .content-panel.active {
+            display: flex;
+        }
+
+        @@keyframes panelFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Alerts */
+        .alert-banner {
+            padding: 14px 18px;
+            border-radius: var(--lh-radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--lh-shadow-sm);
+        }
+
+        .alert-success {
+            background-color: var(--c-active-bg);
+            border: 1px solid var(--c-active-border);
+            color: #065F46;
+        }
+
+        .alert-danger {
+            background-color: var(--c-danger-bg);
+            border: 1px solid var(--c-danger-border);
+            color: var(--c-danger);
+        }
+
+        /* Top Bar */
+        .main-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .page-heading-group h1 {
+            font-family: var(--lh-font-heading);
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--lh-text-headings);
+            letter-spacing: -0.02em;
+        }
+
+        .page-heading-group p {
+            font-size: 0.875rem;
+            color: var(--lh-text-muted);
+        }
+
+        .quick-book-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--lh-blue-600) 0%, var(--lh-blue-400) 100%);
+            color: var(--lh-white);
+            border: none;
+            border-radius: var(--lh-radius-md);
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(30, 96, 213, 0.28);
+            transition: var(--lh-transition);
+        }
+
+        .quick-book-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(30, 96, 213, 0.38);
+        }
+
+        /* Stat Cards Grid */
+        .stat-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .stat-card {
+            background: var(--lh-white);
+            border: 1px solid var(--lh-border-subtle);
+            border-radius: var(--lh-radius-lg);
+            padding: 22px 20px;
+            box-shadow: var(--lh-shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: var(--lh-transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--lh-shadow-md);
+            border-color: var(--lh-blue-100);
+        }
+
+        .stat-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--lh-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-card-icon.blue {
+            background-color: var(--lh-blue-50);
+            color: var(--lh-blue-600);
+        }
+
+        .stat-card-icon.yellow {
+            background-color: var(--c-warning-bg);
+            color: var(--c-warning);
+        }
+
+        .stat-card-icon.green {
+            background-color: var(--c-active-bg);
+            color: var(--c-active);
+        }
+
+        .stat-card-icon.purple {
+            background-color: #F5F3FF;
+            color: #7C3AED;
+        }
+
+        .stat-card-data {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card-value {
+            font-family: var(--lh-font-heading);
+            font-size: 1.625rem;
+            font-weight: 800;
+            color: var(--lh-text-headings);
+            line-height: 1.2;
+        }
+
+        .stat-card-label {
+            font-size: 0.8125rem;
+            color: var(--lh-text-muted);
+            font-weight: 600;
+        }
+
+        /* Content Cards & Sections */
+        .content-card {
+            background: var(--lh-white);
+            border: 1px solid var(--lh-border-subtle);
+            border-radius: var(--lh-radius-lg);
+            box-shadow: var(--lh-shadow-sm);
+            overflow: hidden;
+        }
+
+        .content-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--lh-border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .content-card-title {
+            font-family: var(--lh-font-heading);
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: var(--lh-text-headings);
+        }
+
+        .content-card-body {
+            padding: 24px;
+        }
+
+        /* ==========================================================================
+           BOOKING FORM & SERVICES CHECKBOXES
+           ========================================================================== */
+        .services-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .service-select-label {
+            position: relative;
+            cursor: pointer;
+            display: block;
+        }
+
+        .service-select-label input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .service-card {
+            border: 2px solid var(--lh-border-light);
+            border-radius: var(--lh-radius-lg);
+            padding: 18px;
+            background-color: var(--lh-white);
+            transition: var(--lh-transition);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .service-select-label input[type="checkbox"]:checked + .service-card {
+            border-color: var(--lh-blue-500);
+            background-color: var(--lh-blue-25);
+            box-shadow: 0 0 0 3px rgba(30, 96, 213, 0.15);
+        }
+
+        .service-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-card-name {
+            font-family: var(--lh-font-heading);
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--lh-text-headings);
+        }
+
+        .service-price-pill {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--lh-blue-600);
+            background-color: var(--lh-blue-50);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .service-card-desc {
+            font-size: 0.8125rem;
+            color: var(--lh-text-muted);
+            line-height: 1.4;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--lh-text-headings);
+        }
+
+        .form-control {
+            width: 100%;
+            height: 46px;
+            padding: 10px 14px;
+            border: 1.5px solid var(--lh-border-light);
+            border-radius: var(--lh-radius-md);
+            font-family: var(--lh-font-body);
+            font-size: 0.875rem;
+            color: var(--lh-text-headings);
+            outline: none;
+            transition: var(--lh-transition);
+            background-color: var(--lh-white);
+        }
+
+        .form-control:focus {
+            border-color: var(--lh-blue-500);
+            box-shadow: 0 0 0 3px rgba(30, 96, 213, 0.14);
+        }
+
+        textarea.form-control {
+            height: auto;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .terms-checkbox-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0 24px 0;
+            user-select: none;
+        }
+
+        .terms-checkbox-wrap input[type="checkbox"] {
+            margin-top: 3px;
+            width: 17px;
+            height: 17px;
+            accent-color: var(--lh-blue-600);
+            cursor: pointer;
+        }
+
+        .terms-text {
+            font-size: 0.8125rem;
+            color: var(--lh-text-muted);
+            line-height: 1.4;
+        }
+
+        .terms-text a {
+            color: var(--lh-blue-600);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .terms-text a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-submit-booking {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, var(--lh-blue-600) 0%, var(--lh-blue-500) 100%);
+            color: var(--lh-white);
+            border: none;
+            border-radius: var(--lh-radius-md);
+            font-family: var(--lh-font-body);
+            font-size: 0.9375rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(30, 96, 213, 0.28);
+            transition: var(--lh-transition);
+        }
+
+        .btn-submit-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 96, 213, 0.4);
+        }
+
+        /* ==========================================================================
+           BOOKING HISTORY TABS & TABLES
+           ========================================================================== */
+        .history-tabs-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--lh-border-subtle);
+            padding: 0 24px;
+            background-color: var(--lh-white);
+        }
+
+        .history-tab-btn {
+            padding: 14px 20px;
+            border: none;
+            background: none;
+            font-family: var(--lh-font-heading);
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--lh-text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--lh-transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-tab-btn.active {
+            color: var(--lh-blue-600);
+            border-bottom-color: var(--lh-blue-600);
+        }
+
+        .tab-badge {
+            background-color: var(--lh-blue-50);
+            color: var(--lh-blue-600);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .tab-content-section {
+            display: none;
+            padding: 20px 24px;
+        }
+
+        .tab-content-section.active {
+            display: block;
+        }
+
+        .order-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.875rem;
+        }
+
+        .order-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background-color: var(--lh-blue-25);
+            color: var(--lh-text-headings);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1.5px solid var(--lh-border-light);
+        }
+
+        .order-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--lh-border-subtle);
+            vertical-align: middle;
+        }
+
+        .order-table tr:hover td {
+            background-color: var(--lh-blue-10);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .status-pending { background-color: var(--c-warning-bg); color: #B45309; border: 1px solid var(--c-warning-border); }
+        .status-assigned { background-color: var(--lh-blue-50); color: var(--lh-blue-600); border: 1px solid var(--lh-blue-100); }
+        .status-processing { background-color: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+        .status-payment { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .status-delivered { background-color: var(--c-active-bg); color: #065F46; border: 1px solid var(--c-active-border); }
+        .status-riderassigned,
+        .status-pickedup,
+        .status-intransittoshop { background-color: var(--lh-blue-50); color: var(--lh-blue-600); border: 1px solid var(--lh-blue-100); }
+        .status-weighing,
+        .status-weightconfirmed,
+        .status-washing,
+        .status-drying { background-color: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+        .status-awaitingpayment,
+        .status-paymentconfirmed { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .status-readyfordelivery { background-color: #DBEAFE; color: #1D4ED8; border: 1px solid #93C5FD; }
+        .status-outfordelivery { background-color: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+        .status-cancelled { background-color: var(--c-danger-bg); color: var(--c-danger); border: 1px solid var(--c-danger-border); }
+
+        .btn-cancel-order {
+            padding: 6px 12px;
+            background-color: var(--c-danger-bg);
+            border: 1px solid var(--c-danger-border);
+            color: var(--c-danger);
+            border-radius: var(--lh-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--lh-transition);
+        }
+
+        .btn-cancel-order:hover {
+            background-color: var(--c-danger);
+            color: var(--lh-white);
+        }
+
+        /* ==========================================================================
+           SERVICE TRACKING TIMELINE
+           ========================================================================== */
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            padding-left: 28px;
+            margin-top: 10px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 12px;
+            bottom: 12px;
+            width: 2px;
+            background-color: var(--lh-border-light);
+        }
+
+        .timeline-step {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -28px;
+            top: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: var(--lh-white);
+            border: 2px solid var(--lh-border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: var(--lh-transition);
+        }
+
+        .timeline-step.completed .timeline-dot {
+            background-color: var(--c-active);
+            border-color: var(--c-active);
+            color: var(--lh-white);
+        }
+
+        .timeline-step.active .timeline-dot {
+            background-color: var(--lh-blue-600);
+            border-color: var(--lh-blue-300);
+            color: var(--lh-white);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+            animation: pulseRing 1.8s infinite;
+        }
+
+        @@keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+
+        .timeline-title {
+            font-family: var(--lh-font-heading);
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--lh-text-headings);
+        }
+
+        .timeline-desc {
+            font-size: 0.8125rem;
+            color: var(--lh-text-muted);
+        }
+
+        /* Responsive Breakpoints */
+        @@media (max-width: 1024px) {
+            .stat-cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .customer-sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+            }
+            .customer-shell {
+                flex-direction: column;
+            }
+            .customer-main {
+                margin-left: 0;
+                padding: 24px 16px;
+            }
+            .stat-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="customer-shell">
+        <!-- SIDEBAR -->
+        <aside class="customer-sidebar">
+            <div>
+                <!-- Brand Header -->
+                <a href="/Customer" class="sidebar-brand">
+                    <div class="sidebar-logo-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"></path>
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 6v2M12 16v2M6 12H4M20 12h-2"></path>
+                        </svg>
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <span class="sidebar-wordmark">Laundry Hub</span>
+                        <span class="sidebar-badge">Customer Portal</span>
+                    </div>
+                </a>
+
+                <!-- Navigation List -->
+                <nav class="sidebar-nav">
+                    <span class="sidebar-section-title">Menu</span>
+
+                    <button type="button" class="sidebar-nav-item @(activeTab == "dashboard" ? "active" : "")" onclick="switchTab('dashboard')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Dashboard</span>
+                    </button>
+
+                    <button type="button" class="sidebar-nav-item @(activeTab == "book" ? "active" : "")" onclick="switchTab('book')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        <span>Book a Pickup</span>
+                    </button>
+
+                    <button type="button" class="sidebar-nav-item @(activeTab == "history" ? "active" : "")" onclick="switchTab('history')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Booking History</span>
+                    </button>
+
+                    <button type="button" class="sidebar-nav-item @(activeTab == "tracking" ? "active" : "")" onclick="switchTab('tracking')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                        <span>Service Tracking</span>
+                    </button>
+
+                    <button type="button" class="sidebar-nav-item @(activeTab == "payment" ? "active" : "")" onclick="switchTab('payment')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        <span>Payment</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer with Customer Info & Logout -->
+            <div class="sidebar-footer">
+                <div class="user-profile-meta">
+                    <div class="user-avatar-badge">
+                        @(string.IsNullOrWhiteSpace(Model.User.FullName) ? "U" : Model.User.FullName.Substring(0, 1).ToUpper())
+                    </div>
+                    <div class="user-text-info">
+                        <span class="user-display-name">@Model.User.FullName</span>
+                        <span class="user-email-text">@Model.User.Email</span>
+                    </div>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" title="Log Out">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="customer-main">
+            <!-- Alert Messages -->
+            @if (TempData["CustomerSuccess"] != null)
+            {
+                <div class="alert-banner alert-success" style="margin-bottom: 20px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>@TempData["CustomerSuccess"]</span>
+                </div>
+            }
+            @if (TempData["CustomerError"] != null)
+            {
+                <div class="alert-banner alert-danger" style="margin-bottom: 20px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>@TempData["CustomerError"]</span>
+                </div>
+            }
+
+            <!-- ==========================================================================
+                 PANEL 1: DASHBOARD
+                 ========================================================================== -->
+            <div id="panel-dashboard" class="content-panel @(activeTab == "dashboard" ? "active" : "")">
+                <div class="main-topbar">
+                    <div class="page-heading-group">
+                        <h1>Hello, @Model.User.FullName! 👋</h1>
+                        <p>Welcome to your personal laundry dashboard. Manage pickups and track your clothes in real-time.</p>
+                    </div>
+
+                    <button type="button" class="quick-book-btn" onclick="switchTab('book')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        <span>Book a Pickup</span>
+                    </button>
+
+                    <a href="#notifications-card" class="notification-bell" aria-label="Notifications" style="position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--lh-blue-50); color: var(--lh-blue-600); text-decoration: none; margin-left: 12px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        @if (Model.UnreadNotificationsCount > 0)
+                        {
+                            <span class="tab-badge" style="position: absolute; top: -4px; right: -4px;">@Model.UnreadNotificationsCount</span>
+                        }
+                    </a>
+                </div>
+
+                <!-- 4 Stat Cards -->
+                <div class="stat-cards-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                        </div>
+                        <div class="stat-card-data">
+                            <span class="stat-card-value">@Model.ActiveOrdersCount</span>
+                            <span class="stat-card-label">Active Orders</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon yellow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div class="stat-card-data">
+                            <span class="stat-card-value">@Model.PendingPickupsCount</span>
+                            <span class="stat-card-label">Pending Pickups</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon green">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div class="stat-card-data">
+                            <span class="stat-card-value">@Model.CompletedOrdersCount</span>
+                            <span class="stat-card-label">Completed</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon purple">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        </div>
+                        <div class="stat-card-data">
+                            <span class="stat-card-value">₱@Model.TotalSpent.ToString("N2")</span>
+                            <span class="stat-card-label">Total Spent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="content-card" id="notifications-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">
+                            Notifications
+                            @if (Model.UnreadNotificationsCount > 0)
+                            {
+                                <span class="tab-badge">@Model.UnreadNotificationsCount unread</span>
+                            }
+                        </h3>
+                        @if (Model.UnreadNotificationsCount > 0)
+                        {
+                            <form method="post" asp-controller="Customer" asp-action="MarkNotificationsRead" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="history-tab-btn">Mark all read</button>
+                            </form>
+                        }
+                    </div>
+                    <div class="content-card-body">
+                        @if (Model.Notifications.Count == 0)
+                        {
+                            <p style="padding: 20px; color: var(--lh-text-muted); text-align: center;">No notifications yet. Updates about your orders will appear here.</p>
+                        }
+                        else
+                        {
+                            @foreach (var note in Model.Notifications)
+                            {
+                                <div style="padding: 14px 20px; border-bottom: 1px solid var(--lh-border-subtle); @(note.IsRead ? "" : "background: var(--lh-blue-25);")">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                        <strong style="font-size: 0.9rem;">@note.Title</strong>
+                                        <span style="font-size: 0.75rem; color: var(--lh-text-muted); white-space: nowrap;">@note.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--lh-text-body); margin: 4px 0 0;">@note.Body</p>
+                                    @if (!note.IsRead)
+                                    {
+                                        <form method="post" asp-controller="Customer" asp-action="MarkNotificationsRead" style="margin-top: 8px;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@note.Id" />
+                                            <button type="submit" class="history-tab-btn">Mark read</button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Bookings Table -->
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">Recent Laundry Orders</h3>
+                        <button type="button" class="history-tab-btn" onclick="switchTab('history')">View All Orders →</button>
+                    </div>
+                    <div class="content-card-body" style="padding: 0;">
+                        @if (Model.Orders.Count == 0)
+                        {
+                            <div style="padding: 40px; text-align: center; color: var(--lh-text-muted);">
+                                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 8px;">No laundry orders yet!</p>
+                                <p style="font-size: 0.875rem; margin-bottom: 20px;">Book your first doorstep pickup in Davao City today.</p>
+                                <button type="button" class="quick-book-btn" onclick="switchTab('book')">Book a Pickup Now</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Services</th>
+                                        <th>Pickup Schedule</th>
+                                        <th>Status</th>
+                                        <th>Total Amount</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in Model.Orders.Take(5))
+                                    {
+                                        <tr>
+                                            <td style="font-family: var(--lh-font-heading); font-weight: 700;">@ord.OrderNumber</td>
+                                            <td>
+                                                @string.Join(", ", ord.OrderServices.Select(s => s.Service.Name))
+                                            </td>
+                                            <td>@ord.PreferredPickupDate.ToString("MMM dd, yyyy") (@ord.PreferredPickupTime)</td>
+                                            <td>
+                                                <span class="status-pill status-@ord.Status.ToString().ToLower()">
+                                                    @ord.Status.ToString()
+                                                </span>
+                                            </td>
+                                            <td style="font-weight: 700;">
+                                                @(ord.TotalAmount.HasValue ? $"₱{ord.TotalAmount.Value:N2}" : "Pending Weight")
+                                            </td>
+                                            <td>
+                                                <button type="button" class="quick-book-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="switchTab('tracking')">Track</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==========================================================================
+                 PANEL 2: BOOK A PICKUP
+                 ========================================================================== -->
+            <div id="panel-book" class="content-panel @(activeTab == "book" ? "active" : "")">
+                <div class="page-heading-group">
+                    <h1>Book a Doorstep Pickup</h1>
+                    <p>Select your laundry services and schedule a convenient pickup time in Davao City.</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="content-card-body">
+                        <form asp-controller="Customer" asp-action="BookPickup" method="post" id="bookPickupForm">
+                            @Html.AntiForgeryToken()
+
+                            <!-- Step 1: Select Services -->
+                            <div style="margin-bottom: 24px;">
+                                <label class="form-label" style="font-size: 1rem; margin-bottom: 12px; display: block;">1. Select Laundry Services (Choose 1 or more)</label>
+                                <div class="services-selection-grid">
+                                    @foreach (var svc in Model.AvailableServices)
+                                    {
+                                        <label class="service-select-label">
+                                            <input type="checkbox" name="SelectedServiceIds" value="@svc.Id" checked="@(svc.Name.Contains("Wash & Dry"))" />
+                                            <div class="service-card">
+                                                <div class="service-card-top">
+                                                    <span class="service-card-name">@svc.Name</span>
+                                                    <span class="service-price-pill">₱@svc.PricePerKg/kg</span>
+                                                </div>
+                                                <p class="service-card-desc">@svc.Description</p>
+                                            </div>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Pickup Schedule & Contact Details -->
+                            <label class="form-label" style="font-size: 1rem; margin-bottom: 12px; display: block;">2. Pickup Details & Schedule</label>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Pickup Date</label>
+                                    <input type="date" name="PreferredPickupDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Pickup Time Slot</label>
+                                    <select name="PreferredPickupTime" class="form-control" required>
+                                        <option value="8:00 AM - 10:00 AM">8:00 AM - 10:00 AM (Morning)</option>
+                                        <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM (Midday)</option>
+                                        <option value="1:00 PM - 3:00 PM">1:00 PM - 3:00 PM (Early Afternoon)</option>
+                                        <option value="3:00 PM - 5:00 PM">3:00 PM - 5:00 PM (Late Afternoon)</option>
+                                        <option value="5:00 PM - 7:00 PM">5:00 PM - 7:00 PM (Evening)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Pickup Location / Complete Address</label>
+                                    <input type="text" name="PickupLocation" class="form-control" placeholder="House #, Street, Barangay, District, Davao City" required />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Contact Mobile Number</label>
+                                    <input type="tel" name="ContactNumber" class="form-control" value="@Model.User.PhoneNumber" placeholder="e.g. 09171234567" required />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Special Instructions or Fabric Notes (Optional)</label>
+                                <textarea name="SpecialInstructions" class="form-control" placeholder="e.g. Delicates in separate bag, handle white collared shirts carefully..."></textarea>
+                            </div>
+
+                            <!-- Terms & Conditions Acceptance -->
+                            <div class="terms-checkbox-wrap">
+                                <input type="checkbox" id="acceptTermsCheck" name="AcceptTerms" value="true" required />
+                                <label for="acceptTermsCheck" class="terms-text">
+                                    I agree to Laundry Hub's <a href="/Terms" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions (v@(LaundryHub2._0.Models.LaundryOrder.CurrentTermsVersion))</a> and understand that actual cost will be calculated after in-shop scale weighing. Orders not claimed or paid within 24 hours of completion notice are subject to a 3%/day late fee capped at 30%; orders may be marked abandoned after 15 days overdue.
+                                </label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-submit-booking">
+                                <span>Confirm & Book Pickup</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==========================================================================
+                 PANEL 3: BOOKING HISTORY
+                 ========================================================================== -->
+            <div id="panel-history" class="content-panel @(activeTab == "history" ? "active" : "")">
+                <div class="page-heading-group">
+                    <h1>Booking History</h1>
+                    <p>View all your past and active orders, check rider assignments, and manage cancellations.</p>
+                </div>
+
+                <div class="content-card">
+                    <!-- History Nav Tabs -->
+                    <div class="history-tabs-nav">
+                        <button type="button" class="history-tab-btn active" onclick="filterHistoryTab('pending', this)">
+                            Pending Pickups <span class="tab-badge">@Model.Orders.Count(o => o.Status == LaundryHub2._0.Models.OrderStatus.Pending)</span>
+                        </button>
+                        <button type="button" class="history-tab-btn" onclick="filterHistoryTab('ongoing', this)">
+                            Ongoing Orders <span class="tab-badge">@Model.ActiveOrdersCount</span>
+                        </button>
+                        <button type="button" class="history-tab-btn" onclick="filterHistoryTab('completed', this)">
+                            Completed / Past <span class="tab-badge">@Model.Orders.Count(o => o.Status == LaundryHub2._0.Models.OrderStatus.Delivered || o.Status == LaundryHub2._0.Models.OrderStatus.Cancelled)</span>
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: PENDING -->
+                    <div id="history-tab-pending" class="tab-content-section active">
+                        @{
+                            var pendingOrders = Model.Orders.Where(o => o.Status == LaundryHub2._0.Models.OrderStatus.Pending).ToList();
+                        }
+                        @if (pendingOrders.Count == 0)
+                        {
+                            <p style="padding: 20px; color: var(--lh-text-muted); text-align: center;">No pending pickup requests at this time.</p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Selected Services</th>
+                                        <th>Pickup Scheduled</th>
+                                        <th>Pickup Address</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in pendingOrders)
+                                    {
+                                        <tr>
+                                            <td style="font-weight: 700;">@ord.OrderNumber</td>
+                                            <td>@string.Join(", ", ord.OrderServices.Select(s => s.Service.Name))</td>
+                                            <td>@ord.PreferredPickupDate.ToString("MMM dd, yyyy") (@ord.PreferredPickupTime)</td>
+                                            <td>@ord.PickupLocation</td>
+                                            <td><span class="status-pill status-pending">Pending Rider</span></td>
+                                            <td>
+                                                <form asp-controller="Customer" asp-action="CancelOrder" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@ord.Id" />
+                                                    <button type="submit" class="btn-cancel-order">Cancel</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+
+                    <!-- TAB 2: ONGOING -->
+                    <div id="history-tab-ongoing" class="tab-content-section">
+                        @{
+                            var ongoingOrders = Model.Orders.Where(o => 
+                                o.Status != LaundryHub2._0.Models.OrderStatus.Pending && 
+                                o.Status != LaundryHub2._0.Models.OrderStatus.Delivered && 
+                                o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && 
+                                o.Status != LaundryHub2._0.Models.OrderStatus.Abandoned).ToList();
+                        }
+                        @if (ongoingOrders.Count == 0)
+                        {
+                            <p style="padding: 20px; color: var(--lh-text-muted); text-align: center;">No ongoing laundry processing currently in progress.</p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Assigned Rider</th>
+                                        <th>Current Stage</th>
+                                        <th>Weight</th>
+                                        <th>Total Cost</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in ongoingOrders)
+                                    {
+                                        <tr>
+                                            <td style="font-weight: 700;">@ord.OrderNumber</td>
+                                            <td>
+                                                @if (ord.Status == LaundryHub2._0.Models.OrderStatus.OutForDelivery && ord.DeliveryRider != null)
+                                                {
+                                                    <div>Delivery: @ord.DeliveryRider.FullName</div>
+                                                    <div style="font-size:0.75rem;color:var(--lh-text-muted);">@(ord.DeliveryRider.PhoneNumber ?? "")</div>
+                                                }
+                                                else
+                                                {
+                                                    @(ord.PickupRider != null ? $"{ord.PickupRider.FullName} ({ord.PickupRider.PhoneNumber})" : "Awaiting Rider")
+                                                }
+                                            </td>
+                                            <td><span class="status-pill status-processing">@ord.Status.ToString()</span></td>
+                                            <td>@(ord.WeightKg.HasValue ? $"{ord.WeightKg.Value} kg" : "In Transit / Weighing")</td>
+                                            <td style="font-weight: 700;">@(ord.TotalAmount.HasValue ? $"₱{ord.TotalAmount.Value:N2}" : "Pending Weight")</td>
+                                            <td>
+                                                <button type="button" class="quick-book-btn" style="padding: 5px 12px; font-size: 0.75rem;" onclick="switchTab('tracking')">Track Live</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+
+                    <!-- TAB 3: COMPLETED -->
+                    <div id="history-tab-completed" class="tab-content-section">
+                        @{
+                            var completedOrders = Model.Orders.Where(o => 
+                                o.Status == LaundryHub2._0.Models.OrderStatus.Delivered || 
+                                o.Status == LaundryHub2._0.Models.OrderStatus.Cancelled || 
+                                o.Status == LaundryHub2._0.Models.OrderStatus.Abandoned).ToList();
+                        }
+                        @if (completedOrders.Count == 0)
+                        {
+                            <p style="padding: 20px; color: var(--lh-text-muted); text-align: center;">No completed orders recorded yet.</p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Services</th>
+                                        <th>Total Paid</th>
+                                        <th>Delivery</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in completedOrders)
+                                    {
+                                        <tr>
+                                            <td style="font-weight: 700;">@ord.OrderNumber</td>
+                                            <td>@ord.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                            <td>@string.Join(", ", ord.OrderServices.Select(s => s.Service.Name))</td>
+                                            <td style="font-weight: 700;">@(ord.TotalAmount.HasValue ? $"₱{ord.TotalAmount.Value:N2}" : "—")</td>
+                                            <td>
+                                                @if (ord.Status == LaundryHub2._0.Models.OrderStatus.Delivered)
+                                                {
+                                                    <div>@(ord.DeliveryRider?.FullName ?? "—")</div>
+                                                    @if (ord.DeliveredAt.HasValue)
+                                                    {
+                                                        <div style="font-size:0.75rem;color:var(--lh-text-muted);">@ord.DeliveredAt.Value.ToLocalTime().ToString("MMM d, h:mm tt")</div>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(ord.DeliveryPhotoPath))
+                                                    {
+                                                        <a href="@ord.DeliveryPhotoPath" target="_blank" rel="noopener" style="color:var(--lh-blue-600);font-size:0.75rem;font-weight:600;">View proof</a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span style="color:var(--lh-text-muted);">—</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="status-pill status-@ord.Status.ToString().ToLower()">@ord.Status.ToString()</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==========================================================================
+                 PANEL 4: SERVICE TRACKING
+                 ========================================================================== -->
+            <div id="panel-tracking" class="content-panel @(activeTab == "tracking" ? "active" : "")">
+                <div class="page-heading-group">
+                    <h1>Service Tracking</h1>
+                    <p>Follow the exact lifecycle of your laundry from rider pickup to doorstep delivery.</p>
+                </div>
+
+                @{
+                    var activeOrder = Model.Orders.FirstOrDefault(o => 
+                        o.Status != LaundryHub2._0.Models.OrderStatus.Delivered && 
+                        o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && 
+                        o.Status != LaundryHub2._0.Models.OrderStatus.Abandoned) ?? Model.Orders.FirstOrDefault();
+                }
+
+                @if (activeOrder == null)
+                {
+                    <div class="content-card" style="padding: 40px; text-align: center;">
+                        <p style="font-size: 1rem; font-weight: 600; color: var(--lh-text-headings); margin-bottom: 8px;">No active orders to track</p>
+                        <p style="font-size: 0.875rem; color: var(--lh-text-muted); margin-bottom: 16px;">Schedule a pickup to watch your clothes move through every washing stage.</p>
+                        <button type="button" class="quick-book-btn" onclick="switchTab('book')">Book a Pickup</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="content-card">
+                        <div class="content-card-header">
+                            <div>
+                                <h3 class="content-card-title">Tracking Order: @activeOrder.OrderNumber</h3>
+                                <p style="font-size: 0.8125rem; color: var(--lh-text-muted);">Booked on @activeOrder.CreatedAt.ToString("MMMM dd, yyyy hh:mm tt")</p>
+                            </div>
+                            <span class="status-pill status-@activeOrder.Status.ToString().ToLower()">@activeOrder.Status.ToString()</span>
+                        </div>
+                        <div class="content-card-body">
+                            @if (activeOrder.Status == LaundryHub2._0.Models.OrderStatus.AwaitingPayment)
+                            {
+                                <div class="alert-banner alert-success" style="margin-bottom: 20px; background: #ECFDF5; border: 1.5px solid #10B981; color: #065F46; justify-content: space-between; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 0.9375rem;">Your laundry is clean and ready! 🎉</div>
+                                            <div style="font-size: 0.8125rem;">Complete payment to dispatch for delivery to your doorstep. Total due: <strong>₱@(activeOrder.TotalAmount?.ToString("N2"))</strong></div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="quick-book-btn" style="padding: 7px 16px; font-size: 0.8125rem;" onclick="switchTab('payment')">Pay Now</button>
+                                </div>
+                            }
+                            @if (activeOrder.Status == LaundryHub2._0.Models.OrderStatus.WeightConfirmed && !activeOrder.WeightConfirmedByCustomerAt.HasValue)
+                            {
+                                <div class="alert-banner alert-success" style="margin-bottom: 20px; background: #EFF6FF; border: 1.5px solid #1D4ED8; color: #1E40AF; justify-content: space-between; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 0.9375rem;">Please confirm the weighed amount</div>
+                                            <div style="font-size: 0.8125rem;">Shop scale: <strong>@activeOrder.WeightKg kg</strong> — Total: <strong>₱@(activeOrder.TotalAmount?.ToString("N2"))</strong>. Washing starts after your confirmation.</div>
+                                        </div>
+                                    </div>
+                                    <form asp-controller="Customer" asp-action="ConfirmWeight" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@activeOrder.Id" />
+                                        <button type="submit" class="quick-book-btn" style="padding: 7px 16px; font-size: 0.8125rem;">Confirm Weight</button>
+                                    </form>
+                                </div>
+                            }
+                            <div class="timeline-container">
+                                <!-- Step 1: Placed -->
+                                <div class="timeline-step completed">
+                                    <div class="timeline-dot">✓</div>
+                                    <h4 class="timeline-title">1. Pickup Request Booked</h4>
+                                    <p class="timeline-desc">Scheduled for @activeOrder.PreferredPickupDate.ToString("MMM dd, yyyy") (@activeOrder.PreferredPickupTime)</p>
+                                </div>
+
+                                <!-- Step 2: Rider Assigned -->
+                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.RiderAssigned ? "completed" : "")">
+                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.RiderAssigned ? "✓" : "2")</div>
+                                    <h4 class="timeline-title">2. Rider Assigned</h4>
+                                    <p class="timeline-desc">
+                                        @(activeOrder.PickupRider != null ? $"Rider {activeOrder.PickupRider.FullName} ({activeOrder.PickupRider.PhoneNumber})" : "Awaiting shop rider dispatch")
+                                    </p>
+                                </div>
+
+                                <!-- Step 3: Picked Up -->
+                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.PickedUp ? "completed" : "")">
+                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.PickedUp ? "✓" : "3")</div>
+                                    <h4 class="timeline-title">3. Collected by Rider</h4>
+                                    <p class="timeline-desc">Clothes securely loaded for transport to our central Davao wash facility.</p>
+                                </div>
+
+                                <!-- Step 4: Weighed & Verified -->
+                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.WeightConfirmed ? "completed" : "")">
+                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.WeightConfirmed ? "✓" : "4")</div>
+                                    <h4 class="timeline-title">4. Exact Scale Weighing & Photo Verified</h4>
+                                    <p class="timeline-desc">
+                                        @(activeOrder.WeightKg.HasValue ? $"Verified weight: {activeOrder.WeightKg.Value} kg — Total: ₱{activeOrder.TotalAmount:N2}" : "Awaiting arrival and scale weighing")
+                                    </p>
+                                </div>
+
+                                <!-- Step 5: Washing Cycle -->
+                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Washing ? "completed" : "")">
+                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Washing ? "✓" : "5")</div>
+                                    <h4 class="timeline-title">5. Washing & Fabric Care</h4>
+                                    <p class="timeline-desc">Deep cleaning using premium eco-friendly detergents and sanitizers.</p>
+                                </div>
+
+                                <!-- Step 6: Drying Cycle -->
+                                <div class="timeline-step @(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Drying ? "completed" : "")">
+                                    <div class="timeline-dot">@(activeOrder.Status >= LaundryHub2._0.Models.OrderStatus.Drying ? "✓" : "6")</div>
+                                    <h4 class="timeline-title">6. Temperature-Controlled Drying & Folding</h4>
+                                    <p class="timeline-desc">Gentle tumble dry, crisp steam iron (if selected), and neat packaging.</p>
+                                </div>
+
+                                 @{
+                                     var isDelivered = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.Delivered;
+                                     var isOutForDelivery = activeOrder.Status == LaundryHub2._0.Models.OrderStatus.OutForDelivery;
+                                     var deliveryStepClass = isDelivered ? "completed" : isOutForDelivery ? "active" : "";
+                                 }
+                                 <div class="timeline-step @deliveryStepClass">
+                                     <div class="timeline-dot">@(isDelivered ? "✓" : "7")</div>
+                                     <h4 class="timeline-title">7. Out for Delivery & Returned Fresh</h4>
+                                     <div class="timeline-desc">
+                                         @if (isDelivered)
+                                         {
+                                             <div>Delivered successfully to your doorstep.</div>
+                                             @if (activeOrder.DeliveryRider != null)
+                                             {
+                                                 <div>Delivered by @activeOrder.DeliveryRider.FullName.</div>
+                                             }
+                                             @if (activeOrder.DeliveredAt.HasValue)
+                                             {
+                                                 <div>@activeOrder.DeliveredAt.Value.ToLocalTime().ToString("MMMM dd, yyyy hh:mm tt")</div>
+                                             }
+                                             @if (!string.IsNullOrEmpty(activeOrder.DeliveryPhotoPath))
+                                             {
+                                                 <a href="@activeOrder.DeliveryPhotoPath" target="_blank" rel="noopener" style="color:var(--lh-blue-600);font-weight:600;">View proof of delivery</a>
+                                             }
+                                         }
+                                         else if (isOutForDelivery)
+                                         {
+                                             <div>Your laundry is on the way to your doorstep.</div>
+                                             @if (activeOrder.DeliveryRider != null)
+                                             {
+                                                 <div>Delivery rider: @activeOrder.DeliveryRider.FullName@(activeOrder.DeliveryRider.PhoneNumber != null ? $" ({activeOrder.DeliveryRider.PhoneNumber})" : "")</div>
+                                             }
+                                         }
+                                         else if (activeOrder.Status == LaundryHub2._0.Models.OrderStatus.ReadyForDelivery)
+                                         {
+                                             <div>Payment confirmed. Waiting for the shop to assign a delivery rider.</div>
+                                         }
+                                         else
+                                         {
+                                             <div>Delivery will be scheduled after payment is confirmed.</div>
+                                         }
+                                     </div>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ==========================================================================
+                 PANEL 5: PAYMENT
+                 ========================================================================== -->
+            <div id="panel-payment" class="content-panel @(activeTab == "payment" ? "active" : "")">
+                <div class="page-heading-group">
+                    <h1>Payment Center</h1>
+                    <p>Review invoices, pay securely via PayMongo (GCash, Maya, Debit/Credit Cards), and view receipts.</p>
+                </div>
+
+                @{
+                    var unpaidOrders = Model.Orders.Where(o => !o.IsPaymentConfirmed && o.TotalAmount.HasValue && o.Status != LaundryHub2._0.Models.OrderStatus.Cancelled && !o.IsAbandoned).ToList();
+                    var abandonedOrders = Model.Orders.Where(o => o.IsAbandoned).ToList();
+                    var paidOrders = Model.Orders.Where(o => o.IsPaymentConfirmed).ToList();
+                }
+
+                @if (abandonedOrders.Any())
+                {
+                    <div class="alert-banner alert-danger" style="margin-bottom: 20px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <div>
+                            <strong>Notice: You have @abandonedOrders.Count abandoned order(s).</strong> Orders remaining unpaid after 15 days past completion are deemed abandoned per section 4 of our Terms & Conditions.
+                        </div>
+                    </div>
+                }
+
+                <div class="content-card" style="margin-bottom: 24px;">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">Loyalty Points</h3>
+                        <span class="tab-badge">@Model.LoyaltyBalance pts</span>
+                    </div>
+                    <div class="content-card-body">
+                        <p style="font-size: 0.85rem; color: var(--lh-text-muted); margin: 0 0 12px;">
+                            Earn 1 point for every ₱10 paid. Redeem 100 points for ₱10 off a payable order. Earned points expire after 12 months.
+                        </p>
+                        @if (Model.LoyaltyLedger.Count == 0)
+                        {
+                            <p style="color: var(--lh-text-muted); font-size: 0.85rem; margin: 0;">No loyalty activity yet — points are earned when a delivery completes.</p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Points</th>
+                                        <th>Reason</th>
+                                        <th>Expires</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var entry in Model.LoyaltyLedger)
+                                    {
+                                        <tr>
+                                            <td style="font-size: 0.8125rem; white-space: nowrap;">@entry.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                            <td style="font-size: 0.8125rem;">@entry.Type</td>
+                                            <td style="font-weight: 700; color: @(entry.Points >= 0 ? "#059669" : "#DC2626");">@(entry.Points >= 0 ? "+" : "")@entry.Points</td>
+                                            <td style="font-size: 0.8125rem;">@entry.Reason</td>
+                                            <td style="font-size: 0.8125rem;">@(entry.ExpiresAt.HasValue ? entry.ExpiresAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+
+                <div class="content-card" style="margin-bottom: 24px;">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">Pending Payment</h3>
+                        <span class="tab-badge">@unpaidOrders.Count Due</span>
+                    </div>
+                    <div class="content-card-body" style="padding: 0;">
+                        @if (unpaidOrders.Count == 0)
+                        {
+                            <p style="padding: 30px; text-align: center; color: var(--lh-text-muted);">
+                                All your laundry bills are paid in full! No balance due.
+                            </p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Services</th>
+                                        <th>Base Amount</th>
+                                        <th>Payment Deadline / Status</th>
+                                        <th>Late Penalty</th>
+                                        <th>Total Due</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in unpaidOrders)
+                                    {
+                                        var penalty = ord.AccruedPenaltyAmount ?? 0m;
+                                        var totalDue = (ord.TotalAmount ?? 0m) + penalty;
+                                        var loyaltyDiscount = Model.LoyaltyDiscounts.TryGetValue(ord.Id, out var disc) ? disc : 0m;
+                                        var netDue = totalDue - loyaltyDiscount;
+                                        var isOverdue = penalty > 0m;
+                                        
+                                        string deadlineText = "Awaiting shop notification";
+                                        if (ord.ReadyForDeliveryNotifiedAt.HasValue)
+                                        {
+                                            var deadline = ord.ReadyForDeliveryNotifiedAt.Value.AddHours(24);
+                                            var now = DateTime.UtcNow;
+                                            if (now > deadline)
+                                            {
+                                                var overdueDays = Math.Floor((now - deadline).TotalDays);
+                                                deadlineText = $"Overdue by {(overdueDays > 0 ? (int)overdueDays + "d" : "hours")}";
+                                            }
+                                            else
+                                            {
+                                                var hoursLeft = Math.Ceiling((deadline - now).TotalHours);
+                                                deadlineText = $"Due in ~{(int)hoursLeft} hrs";
+                                            }
+                                        }
+
+                                        <tr>
+                                            <td style="font-weight: 700;">@ord.OrderNumber</td>
+                                            <td>@string.Join(", ", ord.OrderServices.Select(s => s.Service.Name))</td>
+                                            <td>₱@(ord.TotalAmount?.ToString("N2"))</td>
+                                            <td>
+                                                @if (isOverdue)
+                                                {
+                                                    <span class="status-pill" style="background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;">
+                                                        ⚠️ @deadlineText
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="status-pill" style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;">
+                                                        ⏳ @deadlineText
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td style="font-weight: 600; color: @(penalty > 0 ? "#DC2626" : "var(--lh-text-muted)");">
+                                                @(penalty > 0 ? $"₱{penalty:N2} (3%/day)" : "₱0.00")
+                                            </td>
+                                            <td style="font-weight: 800; color: var(--lh-blue-600); font-size: 1rem;">
+                                                ₱@netDue.ToString("N2")
+                                                @if (loyaltyDiscount > 0m)
+                                                {
+                                                    <div style="font-size: 0.75rem; font-weight: 600; color: #059669;">includes −₱@loyaltyDiscount.ToString("N2") loyalty</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <form asp-controller="Customer" asp-action="PayOrder" method="post" style="display:inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@ord.Id" />
+                                                    <button type="submit" class="quick-book-btn" style="padding: 6px 14px; font-size: 0.8125rem;">
+                                                        Pay with PayMongo
+                                                    </button>
+                                                </form>
+                                                @if (Model.LoyaltyBalance >= 100)
+                                                {
+                                                    <form asp-controller="Customer" asp-action="RedeemPoints" method="post" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="OrderId" value="@ord.Id" />
+                                                        <input type="number" name="Points" class="form-control" style="width: 90px; padding: 6px 8px; font-size: 0.8125rem;" min="100" step="100" max="@Model.LoyaltyBalance" value="100" title="Points (100 pts = ₱10 off)" />
+                                                        <button type="submit" class="history-tab-btn">Redeem</button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+
+                <!-- Payment History / Receipts -->
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">Payment History & Receipts</h3>
+                    </div>
+                    <div class="content-card-body" style="padding: 0;">
+                        @if (paidOrders.Count == 0)
+                        {
+                            <p style="padding: 30px; text-align: center; color: var(--lh-text-muted);">No payment history yet.</p>
+                        }
+                        else
+                        {
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Payment Reference</th>
+                                        <th>Date Paid</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ord in paidOrders)
+                                    {
+                                        <tr>
+                                            <td style="font-weight: 700;">@ord.OrderNumber</td>
+                                            <td style="font-family: monospace; font-size: 0.8125rem; color: var(--lh-text-muted);">
+                                                @(ord.PayMongoPaymentId ?? "PM-REF-" + ord.Id)
+                                            </td>
+                                            <td>@(ord.PaymentConfirmedAt?.ToString("MMM dd, yyyy hh:mm tt") ?? ord.CreatedAt.ToString("MMM dd, yyyy"))</td>
+                                            <td style="font-weight: 700; color: #065F46;">₱@ord.TotalAmount?.ToString("N2")</td>
+                                            <td><span class="status-pill status-delivered">Paid (Confirmed)</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tab Switching Script -->
+    <script>
+        function switchTab(tabId) {
+            // Hide all panels
+            document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+            // Remove active from nav items
+            document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+
+            const targetPanel = document.getElementById('panel-' + tabId);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+
+            // Highlight corresponding sidebar item
+            const navButtons = document.querySelectorAll('.sidebar-nav-item');
+            navButtons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update URL without refresh
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.pushState({}, '', url);
+        }
+
+        function filterHistoryTab(subtab, btn) {
+            document.querySelectorAll('.history-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content-section').forEach(s => s.classList.remove('active'));
+
+            btn.classList.add('active');
+            const target = document.getElementById('history-tab-' + subtab);
+            if (target) {
+                target.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

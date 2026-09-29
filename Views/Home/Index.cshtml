@@ -1,0 +1,810 @@
+@{
+    ViewData["Title"] = "Davao City Pickup & Delivery Laundry Service";
+}
+
+<!-- HERO SECTION (Full-Width Background, Centered Content Container) -->
+<section class="lh-section lh-hero-section" id="hero">
+    <div class="lh-container lh-hero-container">
+        <div class="lh-hero-content">
+            <div class="lh-hero-badge">
+                <span class="lh-badge-pulse"></span>
+                <span class="lh-badge-text">Davao City’s #1 Doorstep Laundry Service</span>
+            </div>
+
+            <h1 class="lh-hero-title">
+                Fresh, Spotless Laundry Delivered Across <span class="lh-title-highlight">Davao City</span>
+            </h1>
+
+            <p class="lh-hero-description">
+                Say goodbye to laundry day chores. We pick up your clothes, wash, dry, iron, and deliver them fresh to your home or office. Transparent per-kilo pricing with no hidden charges.
+            </p>
+
+            <div class="lh-hero-price-pill">
+                <div class="lh-price-tag-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                </div>
+                <span>Wash & Fold starts at <strong>₱45 / kg</strong></span>
+                <span class="lh-price-separator">•</span>
+                <span class="lh-free-perk">FREE pickup & delivery on 5kg+</span>
+            </div>
+
+            <div class="lh-hero-actions">
+                <button type="button" class="lh-btn lh-btn-primary lh-btn-lg" data-trigger-signup>
+                    <span>Schedule a Pickup</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+                <a href="#pricing" class="lh-btn lh-btn-outline lh-btn-lg">
+                    <span>Calculate Rates</span>
+                </a>
+            </div>
+
+            <div class="lh-hero-trust-list">
+                <div class="lh-trust-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Min. order 3kg</span>
+                </div>
+                <div class="lh-trust-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Mon–Sat 8AM–7PM</span>
+                </div>
+                <div class="lh-trust-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Weighed at doorstep</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Hero Visual Illustration -->
+        <div class="lh-hero-visual" aria-hidden="true">
+            <div class="lh-hero-card-scene">
+                <!-- Floating Service Pill 1 -->
+                <div class="lh-floating-card lh-float-card-1">
+                    <div class="lh-float-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="lh-float-title">Davao Guaranteed</div>
+                        <div class="lh-float-desc">100% Gentle Fabric Care</div>
+                    </div>
+                </div>
+
+                <!-- Main Graphic Artwork: SVG Scene of Clean Laundry & Delivery -->
+                <div class="lh-scene-illustration">
+                    <svg viewBox="0 0 460 380" fill="none" xmlns="http://www.w3.org/2000/svg" class="lh-hero-svg">
+                        <defs>
+                            <linearGradient id="blueGlow" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#EBF3FE"/>
+                                <stop offset="100%" stop-color="#D4E5F9"/>
+                            </linearGradient>
+                            <linearGradient id="washGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#2563EB"/>
+                                <stop offset="100%" stop-color="#1D4ED8"/>
+                            </linearGradient>
+                            <linearGradient id="basketGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#FFFFFF"/>
+                                <stop offset="100%" stop-color="#F0F6FF"/>
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Soft Backdrop Circle -->
+                        <circle cx="230" cy="190" r="170" fill="url(#blueGlow)" opacity="0.8"/>
+                        <circle cx="230" cy="190" r="140" stroke="#BFDBFE" stroke-width="2" stroke-dasharray="8 8" opacity="0.6"/>
+
+                        <!-- Pedestal Base -->
+                        <ellipse cx="230" cy="315" rx="160" ry="24" fill="#DBEAFE"/>
+                        <ellipse cx="230" cy="310" rx="140" ry="18" fill="#EFF6FF"/>
+
+                        <!-- Laundry Basket Container -->
+                        <path d="M140 210 L155 300 C156 308 164 314 172 314 H288 C296 314 304 308 305 300 L320 210 Z" fill="url(#basketGrad)" stroke="#1E60D5" stroke-width="4"/>
+                        <!-- Basket Weave Lines -->
+                        <line x1="165" y1="240" x2="295" y2="240" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="172" y1="270" x2="288" y2="270" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="200" y1="210" x2="208" y2="305" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="230" y1="210" x2="230" y2="308" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="260" y1="210" x2="252" y2="305" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- Folded Towels & Fresh Clean Clothes Stack -->
+                        <!-- Royal Blue Towel -->
+                        <rect x="150" y="180" width="160" height="34" rx="14" fill="#1E60D5"/>
+                        <rect x="155" y="184" width="28" height="26" rx="10" fill="#3B82F6"/>
+                        
+                        <!-- Sky Blue Folded Linen -->
+                        <rect x="160" y="152" width="140" height="32" rx="13" fill="#60A5FA"/>
+                        <rect x="165" y="156" width="24" height="24" rx="9" fill="#93C5FD"/>
+
+                        <!-- Pure Crisp White Folded Shirt Stack -->
+                        <rect x="170" y="125" width="120" height="30" rx="12" fill="#FFFFFF" stroke="#D4E5F9" stroke-width="3"/>
+                        <rect x="175" y="129" width="20" height="22" rx="8" fill="#F0F6FF"/>
+
+                        <!-- Sparkle 1 -->
+                        <path d="M125 140 Q135 140 135 130 Q135 140 145 140 Q135 140 135 150 Q135 140 125 140 Z" fill="#2563EB"/>
+                        <!-- Sparkle 2 -->
+                        <path d="M315 110 Q325 110 325 100 Q325 110 335 110 Q325 110 325 120 Q325 110 315 110 Z" fill="#3B82F6"/>
+                        <!-- Sparkle 3 -->
+                        <path d="M335 220 Q342 220 342 213 Q342 220 349 220 Q342 220 342 227 Q342 220 335 220 Z" fill="#60A5FA"/>
+
+                        <!-- Floating Clean Soap Bubbles -->
+                        <circle cx="110" cy="190" r="16" fill="#EFF6FF" stroke="#93C5FD" stroke-width="2.5" opacity="0.9"/>
+                        <circle cx="106" cy="186" r="5" fill="#FFFFFF" opacity="0.8"/>
+                        
+                        <circle cx="340" cy="165" r="12" fill="#EFF6FF" stroke="#93C5FD" stroke-width="2" opacity="0.9"/>
+                        <circle cx="337" cy="162" r="3.5" fill="#FFFFFF" opacity="0.8"/>
+
+                        <circle cx="280" cy="85" r="9" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="2" opacity="0.8"/>
+                        
+                        <!-- Davao City Delivery Scooter Icon Silhouette Badge -->
+                        <g transform="translate(60, 240)">
+                            <rect x="0" y="0" width="105" height="52" rx="12" fill="#FFFFFF" stroke="#D4E5F9" stroke-width="2"/>
+                            <!-- Mini Scooter -->
+                            <circle cx="22" cy="34" r="8" stroke="#1E60D5" stroke-width="2.5" fill="#EFF6FF"/>
+                            <circle cx="58" cy="34" r="8" stroke="#1E60D5" stroke-width="2.5" fill="#EFF6FF"/>
+                            <path d="M22 34 H34 L44 20 H52 M34 34 L38 24 H48" stroke="#1E60D5" stroke-width="2.5" stroke-linecap="round"/>
+                            <rect x="18" y="16" width="14" height="12" rx="3" fill="#1E60D5"/>
+                            <text x="68" y="27" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="11" fill="#0B1E36">DVO</text>
+                            <text x="68" y="38" font-family="'Inter', sans-serif" font-weight="600" font-size="9" fill="#1E60D5">EXPRESS</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Floating Service Pill 2 -->
+                <div class="lh-floating-card lh-float-card-2">
+                    <div class="lh-float-icon-check">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div>
+                        <div class="lh-float-title">Pickup & Delivery</div>
+                        <div class="lh-float-desc">Free for 5kg and above</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUST STATS ROW (Full-Width, Centered Inner Content) -->
+<section class="lh-section lh-stats-section" aria-label="Key Service Highlights">
+    <div class="lh-container">
+        <div class="lh-stats-grid">
+            <div class="lh-stat-item">
+                <div class="lh-stat-icon-wrapper">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="lh-stat-data">
+                    <div class="lh-stat-number">24–48h</div>
+                    <div class="lh-stat-label">Fast Davao Turnaround</div>
+                    <div class="lh-stat-note">Same-day express available</div>
+                </div>
+            </div>
+
+            <div class="lh-stat-item">
+                <div class="lh-stat-icon-wrapper">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </div>
+                <div class="lh-stat-data">
+                    <div class="lh-stat-number">15,000+ kg</div>
+                    <div class="lh-stat-label">Laundered in Davao</div>
+                    <div class="lh-stat-note">Trusted by 2,000+ local homes</div>
+                </div>
+            </div>
+
+            <div class="lh-stat-item">
+                <div class="lh-stat-icon-wrapper">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </div>
+                <div class="lh-stat-data">
+                    <div class="lh-stat-number">4.9 / 5.0</div>
+                    <div class="lh-stat-label">Customer Rating</div>
+                    <div class="lh-stat-note">Over 850+ 5-star reviews</div>
+                </div>
+            </div>
+
+            <div class="lh-stat-item">
+                <div class="lh-stat-icon-wrapper">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <line x1="6" y1="12" x2="18" y2="12"></line>
+                        <line x1="6" y1="8" x2="14" y2="8"></line>
+                        <line x1="6" y1="16" x2="10" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="lh-stat-data">
+                    <div class="lh-stat-number">₱45 <span class="lh-stat-unit">/kg</span></div>
+                    <div class="lh-stat-label">Affordable Starting Rate</div>
+                    <div class="lh-stat-note">Wash & Fold per-kilo basis</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS (Full-Width, Centered Inner Content) -->
+<section class="lh-section lh-how-section" id="how-it-works">
+    <div class="lh-container">
+        <div class="lh-section-header">
+            <span class="lh-section-subtitle">Effortless Laundry</span>
+            <h2 class="lh-section-title">How Laundry Hub Works</h2>
+            <p class="lh-section-desc">Get your clothes washed, folded, and delivered back to you in three simple steps.</p>
+        </div>
+
+        <div class="lh-steps-grid">
+            <!-- Step 1 -->
+            <div class="lh-step-card">
+                <div class="lh-step-number-badge">01</div>
+                <div class="lh-step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <h3 class="lh-step-title">Schedule Pickup</h3>
+                <p class="lh-step-text">
+                    Book online or send us a message. Pick a convenient date and time window (Mon–Sat 8AM–7PM). Our rider arrives with an accurate digital scale at your Davao address.
+                </p>
+                <div class="lh-step-detail-tag">Weigh & tag at your doorstep</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="lh-step-card">
+                <div class="lh-step-number-badge">02</div>
+                <div class="lh-step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 7v5l3 3"></path>
+                        <path d="M7 12a5 5 0 0 1 10 0"></path>
+                    </svg>
+                </div>
+                <h3 class="lh-step-title">We Wash & Care</h3>
+                <p class="lh-step-text">
+                    Your garments are sorted by fabric and color, treated for stains, and washed in state-of-the-art commercial washers using premium hypoallergenic detergents and downy softeners.
+                </p>
+                <div class="lh-step-detail-tag">Folded neatly or pressed on hangers</div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="lh-step-card">
+                <div class="lh-step-number-badge">03</div>
+                <div class="lh-step-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                </div>
+                <h3 class="lh-step-title">Delivered Fresh</h3>
+                <p class="lh-step-text">
+                    Within 24 to 48 hours (or same-day with Express), your clothes return crisp, hygienic, and ready to put straight into your closet. Free delivery on orders 5kg and above.
+                </p>
+                <div class="lh-step-detail-tag">Hygienic protective packaging</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING TABLE & CALCULATOR (Full-Width, Centered Inner Content) -->
+<section class="lh-section lh-pricing-section" id="pricing">
+    <div class="lh-container">
+        <div class="lh-section-header">
+            <span class="lh-section-subtitle">Clear & Honest Rates</span>
+            <h2 class="lh-section-title">Transparent Per-Kilo Pricing</h2>
+            <p class="lh-section-desc">Fair rates priced per kilo in Philippine Pesos (₱). No hidden detergent fees or surprise add-ons.</p>
+        </div>
+
+        <!-- Pricing Key Rules Banner -->
+        <div class="lh-pricing-policy-card">
+            <div class="lh-policy-col">
+                <div class="lh-policy-badge">Minimum Order</div>
+                <div class="lh-policy-title">3 kg Minimum</div>
+                <p class="lh-policy-desc">All pickup orders have a 3kg minimum requirement.</p>
+            </div>
+            <div class="lh-policy-divider"></div>
+            <div class="lh-policy-col lh-policy-highlight">
+                <div class="lh-policy-badge lh-badge-free">Free Delivery Deal</div>
+                <div class="lh-policy-title">5 kg+ = FREE Delivery</div>
+                <p class="lh-policy-desc">Free two-way pickup & delivery for 5kg and above! (₱50 flat rate under 5kg).</p>
+            </div>
+            <div class="lh-policy-divider"></div>
+            <div class="lh-policy-col">
+                <div class="lh-policy-badge">Operating Hours</div>
+                <div class="lh-policy-title">Mon–Sat 8AM–7PM</div>
+                <p class="lh-policy-desc">Sunday closed for deep sanitization of all laundry equipment.</p>
+            </div>
+        </div>
+
+        <!-- Services Cards Grid -->
+        <div class="lh-pricing-cards-grid">
+            <!-- Service 1: Wash & Fold -->
+            <div class="lh-price-card lh-card-featured">
+                <div class="lh-card-popular-badge">Most Popular</div>
+                <div class="lh-card-header">
+                    <h3 class="lh-card-service-title">Wash & Fold</h3>
+                    <p class="lh-card-service-sub">Everyday wear, t-shirts, casuals, towels, bedsheets</p>
+                </div>
+                <div class="lh-card-price-row">
+                    <span class="lh-currency">₱</span>
+                    <span class="lh-price-amount">45</span>
+                    <span class="lh-price-freq">/ kg</span>
+                </div>
+                <ul class="lh-card-features">
+                    <li><span class="lh-feat-icon">✓</span> Fabric & color sorting</li>
+                    <li><span class="lh-feat-icon">✓</span> Premium detergent & fabric softener</li>
+                    <li><span class="lh-feat-icon">✓</span> Machine tumble dried & crisp folded</li>
+                    <li><span class="lh-feat-icon">✓</span> Sealed in protective bags</li>
+                </ul>
+                <button type="button" class="lh-btn lh-btn-primary lh-btn-full" data-select-calc="45" data-select-name="Wash & Fold">Calculate This Service</button>
+            </div>
+
+            <!-- Service 2: Wash & Iron -->
+            <div class="lh-price-card">
+                <div class="lh-card-header">
+                    <h3 class="lh-card-service-title">Wash & Iron</h3>
+                    <p class="lh-card-service-sub">Work shirts, office uniforms, slacks, polo shirts</p>
+                </div>
+                <div class="lh-card-price-row">
+                    <span class="lh-currency">₱</span>
+                    <span class="lh-price-amount">60</span>
+                    <span class="lh-price-freq">/ kg</span>
+                </div>
+                <ul class="lh-card-features">
+                    <li><span class="lh-feat-icon">✓</span> Complete wash & deep sanitize</li>
+                    <li><span class="lh-feat-icon">✓</span> Professional steam iron pressing</li>
+                    <li><span class="lh-feat-icon">✓</span> Wrinkle-free protective hangers</li>
+                    <li><span class="lh-feat-icon">✓</span> Ready-to-wear work wardrobe</li>
+                </ul>
+                <button type="button" class="lh-btn lh-btn-outline lh-btn-full" data-select-calc="60" data-select-name="Wash & Iron">Calculate This Service</button>
+            </div>
+
+            <!-- Service 3: Dry Cleaning -->
+            <div class="lh-price-card">
+                <div class="lh-card-header">
+                    <h3 class="lh-card-service-title">Dry Cleaning</h3>
+                    <p class="lh-card-service-sub">Barongs, formal suits, gowns, delicate silks</p>
+                </div>
+                <div class="lh-card-price-row">
+                    <span class="lh-currency">₱</span>
+                    <span class="lh-price-amount">150</span>
+                    <span class="lh-price-freq">/ kg</span>
+                </div>
+                <ul class="lh-card-features">
+                    <li><span class="lh-feat-icon">✓</span> Non-toxic gentle solvent treatment</li>
+                    <li><span class="lh-feat-icon">✓</span> Hand inspection & spot cleaning</li>
+                    <li><span class="lh-feat-icon">✓</span> Custom shape-retention pressing</li>
+                    <li><span class="lh-feat-icon">✓</span> Breathable garment dust covers</li>
+                </ul>
+                <button type="button" class="lh-btn lh-btn-outline lh-btn-full" data-select-calc="150" data-select-name="Dry Cleaning">Calculate This Service</button>
+            </div>
+
+            <!-- Service 4: Comforters & Linens -->
+            <div class="lh-price-card">
+                <div class="lh-card-header">
+                    <h3 class="lh-card-service-title">Comforters & Linens</h3>
+                    <p class="lh-card-service-sub">Bulky duvets, heavy blankets, curtains, bed covers</p>
+                </div>
+                <div class="lh-card-price-row">
+                    <span class="lh-currency">₱</span>
+                    <span class="lh-price-amount">70</span>
+                    <span class="lh-price-freq">/ kg</span>
+                </div>
+                <ul class="lh-card-features">
+                    <li><span class="lh-feat-icon">✓</span> Large commercial capacity drum wash</li>
+                    <li><span class="lh-feat-icon">✓</span> Deep mite & dust removal sanitizing</li>
+                    <li><span class="lh-feat-icon">✓</span> Fluffed & even heat drying</li>
+                    <li><span class="lh-feat-icon">✓</span> Heavy-duty compact travel packs</li>
+                </ul>
+                <button type="button" class="lh-btn lh-btn-outline lh-btn-full" data-select-calc="70" data-select-name="Comforters & Linens">Calculate This Service</button>
+            </div>
+        </div>
+
+        <!-- Add-on Note: Express -->
+        <div class="lh-addon-row">
+            <div class="lh-addon-content">
+                <div class="lh-addon-badge">Optional Add-On</div>
+                <div class="lh-addon-title">⚡ Express Same-Day Rush Service (+₱20/kg)</div>
+                <p class="lh-addon-desc">Need your laundry in a hurry? Picked up before 11:00 AM and delivered back by 7:00 PM the exact same day.</p>
+            </div>
+        </div>
+
+        <!-- Interactive Per-Kilo Cost Calculator -->
+        <div class="lh-calculator-box" id="calculator">
+            <div class="lh-calc-header">
+                <div class="lh-calc-title-group">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>
+                    <h3 class="lh-calc-title">Interactive Rate & Weight Calculator</h3>
+                </div>
+                <span class="lh-calc-badge">Real-time Davao Quote (₱)</span>
+            </div>
+
+            <div class="lh-calc-body">
+                <div class="lh-calc-inputs">
+                    <!-- Service Selection -->
+                    <div class="lh-calc-field">
+                        <label for="calcServiceSelect" class="lh-calc-label">Choose Service Type:</label>
+                        <select id="calcServiceSelect" class="lh-calc-select">
+                            <option value="45" selected>Wash & Fold (₱45/kg)</option>
+                            <option value="60">Wash & Iron (₱60/kg)</option>
+                            <option value="70">Comforters & Linens (₱70/kg)</option>
+                            <option value="150">Dry Cleaning (₱150/kg)</option>
+                        </select>
+                    </div>
+
+                    <!-- Weight Slider & Quick Buttons -->
+                    <div class="lh-calc-field">
+                        <div class="lh-slider-label-row">
+                            <label for="weightSlider" class="lh-calc-label">Estimated Weight:</label>
+                            <span class="lh-slider-val-badge"><span id="weightDisplay">6</span> kg</span>
+                        </div>
+                        <input type="range" id="weightSlider" min="3" max="25" step="0.5" value="6" class="lh-range-slider" />
+                        <div class="lh-slider-ticks">
+                            <span>3 kg (Min)</span>
+                            <span class="lh-tick-highlight">5 kg (Free Delivery)</span>
+                            <span>15 kg</span>
+                            <span>25 kg</span>
+                        </div>
+
+                        <!-- Quick Preset Weight Buttons -->
+                        <div class="lh-preset-weights">
+                            <button type="button" class="lh-preset-btn" data-weight="3">3 kg (Single)</button>
+                            <button type="button" class="lh-preset-btn active" data-weight="6">6 kg (Couple)</button>
+                            <button type="button" class="lh-preset-btn" data-weight="10">10 kg (Family)</button>
+                            <button type="button" class="lh-preset-btn" data-weight="15">15 kg (Heavy)</button>
+                        </div>
+                    </div>
+
+                    <!-- Express Option Checkbox -->
+                    <div class="lh-calc-field">
+                        <label class="lh-calc-checkbox-card">
+                            <input type="checkbox" id="expressCheckbox" />
+                            <div class="lh-checkbox-content">
+                                <div class="lh-check-title">
+                                    <span>⚡ Add Same-Day Express (+₱20/kg)</span>
+                                </div>
+                                <div class="lh-check-sub">Pickup in the morning, delivered fresh by evening.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Calculator Output / Bill Breakdown -->
+                <div class="lh-calc-summary">
+                    <div class="lh-summary-header">Estimated Breakdown</div>
+                    
+                    <div class="lh-summary-line">
+                        <span id="summaryServiceName">Wash & Fold</span>
+                        <span id="summaryServiceTotal">₱270.00</span>
+                    </div>
+
+                    <div class="lh-summary-line" id="summaryExpressLine" style="display:none;">
+                        <span>Express Rush Add-on</span>
+                        <span id="summaryExpressTotal">+₱120.00</span>
+                    </div>
+
+                    <div class="lh-summary-line">
+                        <span>Davao Delivery Fee</span>
+                        <span id="summaryDeliveryFee" class="lh-fee-free">FREE (5kg+)</span>
+                    </div>
+
+                    <!-- Free Delivery Progress Bar -->
+                    <div class="lh-free-delivery-tracker" id="freeDeliveryTracker">
+                        <div class="lh-tracker-text" id="trackerText">🎉 You qualify for FREE pickup & delivery!</div>
+                        <div class="lh-tracker-bar">
+                            <div class="lh-tracker-fill" id="trackerFill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="lh-summary-total-row">
+                        <div>
+                            <div class="lh-total-label">Total Estimated Cost</div>
+                            <div class="lh-total-sub">Pay via GCash, Maya, or COD upon delivery</div>
+                        </div>
+                        <div class="lh-total-amount" id="totalEstimate">₱270</div>
+                    </div>
+
+                    <button type="button" class="lh-btn lh-btn-primary lh-btn-full" id="bookEstimateBtn">
+                        <span>Book Pickup with this Estimate</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SERVICE AREA & SCHEDULE (Full-Width, Centered Inner Content) -->
+<section class="lh-section lh-area-section" id="service-area">
+    <div class="lh-container">
+        <div class="lh-section-header">
+            <span class="lh-section-subtitle">Davao City Coverage</span>
+            <h2 class="lh-section-title">Serving Major Davao Districts</h2>
+            <p class="lh-section-desc">Our fleet travels throughout Davao City from Monday to Saturday, 8:00 AM to 7:00 PM.</p>
+        </div>
+
+        <div class="lh-area-layout">
+            <!-- Districts Badges & Interactive Checker -->
+            <div class="lh-area-card">
+                <div class="lh-area-card-header">
+                    <h3 class="lh-area-card-title">Covered Davao City Districts</h3>
+                    <p class="lh-area-card-desc">Click any district below to check daily pickup schedule and status:</p>
+                </div>
+
+                <div class="lh-districts-grid" id="districtBadges">
+                    <button type="button" class="lh-district-pill active" data-district="Poblacion" data-schedule="Daily (Mon–Sat) • Multiple morning & afternoon slots">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Poblacion</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Talomo" data-schedule="Daily (Mon–Sat) • Morning 8AM–12PM & Afternoon 1PM–5PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Talomo</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Agdao" data-schedule="Daily (Mon–Sat) • Morning 9AM–1PM & Afternoon 2PM–6PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Agdao</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Buhangin" data-schedule="Daily (Mon–Sat) • Regular hourly pickup routes">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Buhangin</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Bunawan" data-schedule="Mon, Wed, Fri & Sat • Slots: 10AM–4PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Bunawan</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Toril" data-schedule="Daily (Mon–Sat) • Morning 8AM–12PM & Afternoon 1PM–6PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Toril</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Tugbok" data-schedule="Mon, Tue, Thu & Sat • Slots: 9AM–3PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Tugbok</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                    <button type="button" class="lh-district-pill" data-district="Calinan" data-schedule="Tue, Thu & Sat • Slots: 10AM–3PM">
+                        <span class="lh-dist-dot"></span>
+                        <span class="lh-dist-name">Calinan</span>
+                        <span class="lh-dist-status">Active</span>
+                    </button>
+                </div>
+
+                <!-- Live Selected District Info Box -->
+                <div class="lh-district-detail-box" id="districtDetailBox">
+                    <div class="lh-detail-header">
+                        <div class="lh-detail-location">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span class="lh-detail-name" id="selectedDistrictName">Poblacion District, Davao City</span>
+                        </div>
+                        <span class="lh-coverage-badge">✓ Guaranteed Coverage</span>
+                    </div>
+                    <div class="lh-detail-schedule" id="selectedDistrictSchedule">
+                        <strong>Pickup & Delivery Schedule:</strong> Daily (Mon–Sat) • Multiple morning & afternoon slots available.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operating Hours & Dispatch Info Card -->
+            <div class="lh-dispatch-card">
+                <div class="lh-dispatch-header">
+                    <div class="lh-dispatch-badge">Service Hours</div>
+                    <h3 class="lh-dispatch-title">Operating Times</h3>
+                </div>
+
+                <div class="lh-hours-list">
+                    <div class="lh-hour-row">
+                        <span class="lh-day-name">Monday – Friday</span>
+                        <span class="lh-time-val">8:00 AM – 7:00 PM</span>
+                    </div>
+                    <div class="lh-hour-row">
+                        <span class="lh-day-name">Saturday</span>
+                        <span class="lh-time-val">8:00 AM – 7:00 PM</span>
+                    </div>
+                    <div class="lh-hour-row lh-day-closed">
+                        <span class="lh-day-name">Sunday</span>
+                        <span class="lh-time-val">Closed for Sanitization</span>
+                    </div>
+                </div>
+
+                <div class="lh-dispatch-note">
+                    <div class="lh-note-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E60D5" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                    <p>Have an address in an unlisted barangay in Davao? Message us directly on WhatsApp or call our local hotline at <strong>(082) 299-4821</strong>.</p>
+                </div>
+
+                <button type="button" class="lh-btn lh-btn-secondary lh-btn-full" data-trigger-signup>
+                    Check Availability for My Street
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CUSTOMER TESTIMONIALS (Full-Width, Centered Inner Content) -->
+<section class="lh-section lh-reviews-section" id="reviews">
+    <div class="lh-container">
+        <div class="lh-section-header">
+            <span class="lh-section-subtitle">Real Davao Reviews</span>
+            <h2 class="lh-section-title">Loved by Homes & Pros Across Davao</h2>
+            <p class="lh-section-desc">See what fellow Davaoeños say about our per-kilo laundry service.</p>
+        </div>
+
+        <div class="lh-reviews-grid">
+            <!-- Review 1 -->
+            <div class="lh-review-card">
+                <div class="lh-review-stars" aria-label="5 out of 5 stars">
+                    ★★★★★
+                </div>
+                <blockquote class="lh-review-quote">
+                    "Laundry Hub is an absolute lifesaver for our busy household in Bajada. Having our laundry weighed right at our doorstep and returned crisp and fragrant in less than 24 hours is worth every peso. Their ₱45/kg wash & fold is cheaper than running our own condo washer!"
+                </blockquote>
+                <div class="lh-reviewer-info">
+                    <div class="lh-reviewer-avatar">AT</div>
+                    <div>
+                        <div class="lh-reviewer-name">Dr. Alyssa Mae Tan</div>
+                        <div class="lh-reviewer-meta">Poblacion District, Davao City • Verified Customer</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review 2 -->
+            <div class="lh-review-card">
+                <div class="lh-review-stars" aria-label="5 out of 5 stars">
+                    ★★★★★
+                </div>
+                <blockquote class="lh-review-quote">
+                    "Our family sends heavy comforters and bed linens every two weeks from Matina. With other services, bulky items take nearly a week, but Laundry Hub had them fresh, fluffy, and sealed in airtight bags in 2 days. Plus, free delivery on orders 5kg+ is a huge bonus."
+                </blockquote>
+                <div class="lh-reviewer-info">
+                    <div class="lh-reviewer-avatar">CM</div>
+                    <div>
+                        <div class="lh-reviewer-name">Engr. Carlos Mendoza</div>
+                        <div class="lh-reviewer-meta">Talomo District, Davao City • Verified Customer</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review 3 -->
+            <div class="lh-review-card">
+                <div class="lh-review-stars" aria-label="5 out of 5 stars">
+                    ★★★★★
+                </div>
+                <blockquote class="lh-review-quote">
+                    "Used their same-day Express service for my barong and formal work shirts before a regional medical conference at SMX Convention Center Davao. The pressing was impeccable — zero wrinkles and delivered right to my lobby on time."
+                </blockquote>
+                <div class="lh-reviewer-info">
+                    <div class="lh-reviewer-avatar">PR</div>
+                    <div>
+                        <div class="lh-reviewer-name">Patricia Ramos</div>
+                        <div class="lh-reviewer-meta">Buhangin District, Davao City • Verified Customer</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CLOSING CTA BAND (Full-Width High-Contrast Blue, Centered Inner Content) -->
+<section class="lh-section lh-closing-section">
+    <div class="lh-container lh-closing-container">
+        <div class="lh-closing-inner">
+            <span class="lh-closing-tag">Fast • Reliable • Affordable</span>
+            <h2 class="lh-closing-title">Ready for Clean, Fresh Laundry Without the Hassle?</h2>
+            <p class="lh-closing-text">
+                Book your pickup slot today in Davao City. Starting at just ₱45/kg with free doorstep pickup and delivery on all orders 5kg and above.
+            </p>
+            <div class="lh-closing-actions">
+                <button type="button" class="lh-btn lh-btn-white lh-btn-lg" data-trigger-signup>
+                    <span>Schedule Pickup Now</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <a href="tel:+63822994821" class="lh-btn lh-btn-ghost-white lh-btn-lg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <span>Call (082) 299-4821</span>
+                </a>
+            </div>
+            <div class="lh-closing-perks">
+                <span>✓ 3kg Minimum Order</span>
+                <span>✓ Mon–Sat 8AM–7PM</span>
+                <span>✓ GCash / Maya / Cash on Delivery</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER (Full-Width, Centered Inner Content, Peso Currency Note) -->
+<footer class="lh-footer">
+    <div class="lh-container">
+        <div class="lh-footer-main">
+            <!-- Brand Column -->
+            <div class="lh-footer-col lh-footer-brand-col">
+                <a href="#top" class="lh-brand lh-footer-brand">
+                    <div class="lh-logo-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM7.5 17.5C6.67 17.5 6 16.83 6 16C6 15.17 6.67 14.5 7.5 14.5C8.33 14.5 9 15.17 9 16C9 16.83 8.33 17.5 7.5 17.5ZM12 17.5C11.17 17.5 10.5 16.83 10.5 16C10.5 15.17 11.17 14.5 12 14.5C12.83 14.5 13.5 15.17 13.5 16C13.5 16.83 12.83 17.5 12 17.5ZM16.5 17.5C15.67 17.5 15 16.83 15 16C15 15.17 15.67 14.5 16.5 14.5C17.33 14.5 18 15.17 18 16C18 16.83 17.33 17.5 16.5 17.5ZM17.2 11.8C16.88 12.28 16.34 12.56 15.77 12.56H8.23C7.66 12.56 7.12 12.28 6.8 11.8L5.35 9.63C4.9 8.95 5.39 8.04 6.2 8.04H17.8C18.61 8.04 19.1 8.95 18.65 9.63L17.2 11.8Z" fill="currentColor"/>
+                            <circle cx="17" cy="5" r="2.5" fill="#60A5FA"/>
+                        </svg>
+                    </div>
+                    <div class="lh-brand-text">
+                        <span class="lh-brand-title">Laundry Hub</span>
+                        <span class="lh-brand-tag">Davao City</span>
+                    </div>
+                </a>
+                <p class="lh-footer-desc">
+                    Davao City's premier per-kilo laundry pickup and delivery service. We bring industrial-grade hygiene, fabric care, and convenience to your doorstep.
+                </p>
+                <div class="lh-footer-contact">
+                    <div>📍 J.P. Laurel Ave, Bajada, Davao City 8000</div>
+                    <div>📞 Hotline: (082) 299-4821 • Mobile: 0917 892 4821</div>
+                    <div>🕒 Mon–Sat 8:00 AM – 7:00 PM (Closed Sun)</div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="lh-footer-col">
+                <h4 class="lh-footer-heading">Services</h4>
+                <ul class="lh-footer-links">
+                    <li><a href="#pricing">Wash & Fold (₱45/kg)</a></li>
+                    <li><a href="#pricing">Wash & Iron (₱60/kg)</a></li>
+                    <li><a href="#pricing">Dry Cleaning (₱150/kg)</a></li>
+                    <li><a href="#pricing">Comforters & Linens (₱70/kg)</a></li>
+                    <li><a href="#pricing">Same-Day Express (+₱20/kg)</a></li>
+                </ul>
+            </div>
+
+            <!-- Davao Coverage -->
+            <div class="lh-footer-col">
+                <h4 class="lh-footer-heading">Davao Districts</h4>
+                <ul class="lh-footer-links">
+                    <li><a href="#service-area">Poblacion & Downtown</a></li>
+                    <li><a href="#service-area">Talomo & Matina</a></li>
+                    <li><a href="#service-area">Buhangin & Lanang</a></li>
+                    <li><a href="#service-area">Agdao & Bunawan</a></li>
+                    <li><a href="#service-area">Toril, Tugbok & Calinan</a></li>
+                </ul>
+            </div>
+
+            <!-- Company & Legal -->
+            <div class="lh-footer-col">
+                <h4 class="lh-footer-heading">Customer Care</h4>
+                <ul class="lh-footer-links">
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#reviews">Customer Reviews</a></li>
+                    <li><a href="#privacy">Privacy Policy</a></li>
+                    <li><a href="/Terms">Terms of Service</a></li>
+                    <li><a href="#guarantee">Fabric Care Guarantee</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Philippine Peso Currency Note & Notice -->
+        <div class="lh-footer-peso-note">
+            <div class="lh-peso-badge">Currency & Rate Notice</div>
+            <p>
+                All prices and service rates on this site are quoted in <strong>Philippine Pesos (₱)</strong>. A minimum order requirement of <strong>3 kg</strong> applies to all pickups. Free two-way pickup and delivery is automatically granted to orders weighing <strong>5 kg and above</strong> across all active Davao City service zones. A flat fee of ₱50 applies to orders below 5 kg. Rates and service hours (Mon–Sat 8:00 AM – 7:00 PM) are subject to standard fabric terms.
+            </p>
+        </div>
+
+        <div class="lh-footer-bottom">
+            <div>&copy; 2026 Laundry Hub Davao City. All rights reserved.</div>
+            <div class="lh-footer-bottom-links">
+                <a href="/Terms">Terms</a>
+                <span>•</span>
+                <a href="#privacy">Privacy</a>
+                <span>•</span>
+                <a href="#cookies">Cookies</a>
+            </div>
+        </div>
+    </div>
+</footer>

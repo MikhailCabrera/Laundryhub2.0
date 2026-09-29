@@ -1,0 +1,729 @@
+@model LaundryHub2._0.Models.RiderDashboardViewModel
+@using LaundryHub2._0.Models
+@{
+    Layout = null;
+    ViewData["Title"] = "Rider Portal | Laundry Hub Davao City";
+    var activeTab = ViewData["ActiveTab"]?.ToString() ?? "dashboard";
+
+    string StatusBadgeClass(OrderStatus s) => s switch {
+        OrderStatus.RiderAssigned   => "rb rb-assigned",
+        OrderStatus.PickedUp        => "rb rb-pickedup",
+        OrderStatus.InTransitToShop => "rb rb-transit",
+        OrderStatus.Weighing        => "rb rb-weighing",
+        OrderStatus.ReadyForDelivery => "rb rb-ready",
+        OrderStatus.OutForDelivery  => "rb rb-delivery",
+        OrderStatus.Delivered       => "rb rb-complete",
+        _ => "rb rb-done"
+    };
+    string StatusLabel(OrderStatus s) => s switch {
+        OrderStatus.RiderAssigned   => "Rider Assigned",
+        OrderStatus.PickedUp        => "Picked Up",
+        OrderStatus.InTransitToShop => "In Transit to Shop",
+        OrderStatus.Weighing        => "Arrived at Shop",
+        OrderStatus.ReadyForDelivery => "Ready for Delivery",
+        OrderStatus.OutForDelivery  => "Out for Delivery",
+        OrderStatus.Delivered       => "Delivered",
+        OrderStatus.Cancelled       => "Cancelled",
+        OrderStatus.Abandoned       => "Abandoned",
+        _ => s.ToString()
+    };
+    string Initials(string? n) {
+        if (string.IsNullOrEmpty(n)) return "?";
+        return string.Concat(n.Split(' ').Take(2).Where(p => p.Length > 0).Select(p => char.ToUpper(p[0])));
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <meta name="description" content="Laundry Hub Rider Portal — view assigned pickup jobs and update status." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --lh-navy-950:#071324;--lh-navy-900:#0B1E36;--lh-navy-800:#102A4C;--lh-navy-700:#163865;
+            --lh-blue-600:#1D4ED8;--lh-blue-500:#1E60D5;--lh-blue-400:#3B82F6;--lh-blue-300:#60A5FA;
+            --lh-blue-200:#93C5FD;--lh-blue-100:#BFDBFE;--lh-blue-50:#EBF3FE;--lh-blue-25:#F4F8FE;--lh-blue-10:#F8FAFD;
+            --lh-white:#FFFFFF;--lh-text-headings:#0B1E36;--lh-text-body:#334E68;--lh-text-muted:#627D98;
+            --lh-border-light:#D8E6F8;--lh-border-subtle:#E2EDFA;--lh-border-focus:#1E60D5;
+            --lh-font-heading:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            --lh-font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            --lh-shadow-sm:0 2px 6px rgba(16,42,76,0.04);--lh-shadow-md:0 8px 24px rgba(16,42,76,0.08);
+            --lh-shadow-lg:0 16px 36px rgba(16,42,76,0.12);--lh-shadow-xl:0 24px 50px rgba(16,42,76,0.16);
+            --lh-transition:all 0.22s cubic-bezier(0.16,1,0.3,1);
+            --lh-radius-sm:6px;--lh-radius-md:10px;--lh-radius-lg:16px;--lh-radius-xl:24px;
+            --sidebar-w:280px;
+            --c-success:#10B981;--c-success-bg:#ECFDF5;--c-success-border:#A7F3D0;
+            --c-warning:#F59E0B;--c-warning-bg:#FFFBEB;--c-warning-border:#FDE68A;
+            --c-danger:#EF4444;--c-danger-bg:#FEF2F2;--c-danger-border:#FECACA;
+        }
+        *,*::before,*::after{box-sizing:border-box;}
+        html{font-size:16px;scroll-behavior:smooth;margin:0;padding:0;height:100%;background:var(--lh-blue-10);}
+        body{margin:0;padding:0;min-height:100vh;font-family:var(--lh-font-body);font-size:1rem;line-height:1.6;color:var(--lh-text-body);background:var(--lh-blue-10);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+        :focus-visible{outline:3px solid var(--lh-blue-400);outline-offset:2px;border-radius:var(--lh-radius-sm);}
+
+        /* ── Shell ── */
+        .rider-shell{display:flex;min-height:100vh;}
+
+        /* ── Sidebar ── */
+        .rider-sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--lh-navy-900);display:flex;flex-direction:column;overflow-y:auto;z-index:100;box-shadow:4px 0 24px rgba(7,19,36,0.2);scrollbar-width:thin;scrollbar-color:var(--lh-navy-700) transparent;}
+        .rider-sidebar::-webkit-scrollbar{width:4px;}
+        .rider-sidebar::-webkit-scrollbar-thumb{background:var(--lh-navy-700);border-radius:4px;}
+        .sb-brand{display:flex;align-items:center;gap:12px;padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07);}
+        .sb-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--lh-blue-500),var(--lh-blue-400));border-radius:var(--lh-radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(30,96,213,0.35);}
+        .sb-logo svg{color:#fff;}
+        .sb-brand-text{display:flex;flex-direction:column;gap:1px;}
+        .sb-wordmark{font-family:var(--lh-font-heading);font-size:0.9rem;font-weight:700;color:#fff;line-height:1.2;}
+        .sb-badge{display:inline-flex;align-items:center;padding:2px 8px;background:rgba(249,115,22,0.2);border:1px solid rgba(249,115,22,0.4);border-radius:20px;font-size:0.6875rem;font-weight:600;color:#FB923C;letter-spacing:0.04em;text-transform:uppercase;}
+        .sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+        .sb-nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px 11px 14px;border-radius:var(--lh-radius-md);color:rgba(255,255,255,0.6);font-size:0.9rem;font-weight:500;transition:var(--lh-transition);border:none;border-left:3px solid transparent;background:none;width:100%;text-align:left;cursor:pointer;}
+        .sb-nav-item .nav-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);transition:var(--lh-transition);}
+        .sb-nav-item:hover{background:rgba(59,130,246,0.1);color:rgba(255,255,255,0.9);border-left-color:rgba(96,165,250,0.5);}
+        .sb-nav-item:hover .nav-icon{color:var(--lh-blue-300);}
+        .sb-nav-item.active{background:rgba(59,130,246,0.16);color:#fff;border-left-color:var(--lh-blue-400);}
+        .sb-nav-item.active .nav-icon{color:var(--lh-blue-300);}
+        .sb-job-count{margin-left:auto;background:#EF4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.6875rem;font-weight:700;}
+        .sb-footer{padding:14px 10px 18px;border-top:1px solid rgba(255,255,255,0.07);}
+        .sb-footer-info{display:flex;align-items:center;gap:10px;padding:8px 10px;}
+        .sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#F97316,#EA580C);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;}
+        .sb-meta{display:flex;flex-direction:column;gap:1px;overflow:hidden;}
+        .sb-name{font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .sb-role{font-size:0.7rem;color:rgba(255,255,255,0.38);}
+
+        /* ── Main ── */
+        .rider-main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;padding:36px 40px;display:flex;flex-direction:column;gap:0;}
+        .panel{display:none;flex-direction:column;gap:24px;}
+        .panel.active{display:flex;}
+        .panel-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+        .panel-title{font-family:var(--lh-font-heading);font-size:1.625rem;font-weight:800;color:var(--lh-text-headings);margin:0;line-height:1.2;}
+        .panel-subtitle{font-size:0.875rem;color:var(--lh-text-muted);margin:4px 0 0;}
+
+        /* ── Cards ── */
+        .card{background:#fff;border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;}
+        .card-body{padding:24px;}
+
+        /* ── Job Cards ── */
+        .jobs-grid{display:flex;flex-direction:column;gap:16px;}
+        .job-card{background:#fff;border-radius:var(--lh-radius-lg);border:1px solid var(--lh-border-subtle);box-shadow:var(--lh-shadow-sm);overflow:hidden;transition:var(--lh-transition);}
+        .job-card:hover{box-shadow:var(--lh-shadow-md);transform:translateY(-1px);}
+        .job-card-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px 14px;border-bottom:1px solid var(--lh-border-subtle);gap:12px;flex-wrap:wrap;}
+        .job-order-num{font-family:var(--lh-font-heading);font-size:1rem;font-weight:700;color:var(--lh-blue-600);}
+        .job-card-body{padding:16px 24px;}
+        .job-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 20px;margin-bottom:16px;}
+        .job-info-item{display:flex;flex-direction:column;gap:2px;}
+        .job-info-label{font-size:0.7rem;font-weight:600;color:var(--lh-text-muted);text-transform:uppercase;letter-spacing:0.05em;}
+        .job-info-value{font-size:0.875rem;font-weight:500;color:var(--lh-text-headings);}
+        .job-services{font-size:0.8125rem;color:var(--lh-text-muted);margin-bottom:16px;}
+        .job-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+        /* ── Status badges (rider context) ── */
+        .rb{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:0.03em;white-space:nowrap;}
+        .rb::before{content:"";width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+        .rb-assigned{background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE;}.rb-assigned::before{background:#6366F1;}
+        .rb-pickedup{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}.rb-pickedup::before{background:#F97316;}
+        .rb-transit{background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;}.rb-transit::before{background:#F59E0B;}
+        .rb-weighing{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;}.rb-weighing::before{background:#10B981;}
+        .rb-ready{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}.rb-ready::before{background:#3B82F6;}
+        .rb-delivery{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}.rb-delivery::before{background:#F97316;}
+        .rb-complete{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;}.rb-complete::before{background:#10B981;}
+        .rb-done{background:#F9FAFB;color:#6B7280;border:1px solid #E5E7EB;}.rb-done::before{background:#9CA3AF;}
+
+        /* ── Buttons ── */
+        .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--lh-radius-md);font-family:var(--lh-font-body);font-size:0.8125rem;font-weight:600;cursor:pointer;border:none;transition:var(--lh-transition);line-height:1.4;white-space:nowrap;}
+        .btn-primary{background:linear-gradient(135deg,var(--lh-blue-600),var(--lh-blue-400));color:#fff;box-shadow:0 2px 8px rgba(30,96,213,0.25);}
+        .btn-primary:hover{box-shadow:0 4px 14px rgba(30,96,213,0.4);transform:translateY(-1px);}
+        .btn-orange{background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;box-shadow:0 2px 8px rgba(234,88,12,0.25);}
+        .btn-orange:hover{box-shadow:0 4px 14px rgba(234,88,12,0.4);transform:translateY(-1px);}
+        .btn-success{background:linear-gradient(135deg,#059669,#10B981);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,0.25);}
+        .btn-success:hover{box-shadow:0 4px 14px rgba(5,150,105,0.4);transform:translateY(-1px);}
+        .btn-ghost{background:transparent;color:var(--lh-text-muted);border:1px solid var(--lh-border-light);}
+        .btn-ghost:hover{background:var(--lh-blue-50);color:var(--lh-blue-600);border-color:var(--lh-blue-200);}
+        .btn-sm{padding:6px 12px;font-size:0.75rem;}
+
+        /* ── Stat Cards ── */
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
+        .stat-card{background:#fff;border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-lg);padding:20px 24px;box-shadow:var(--lh-shadow-sm);display:flex;flex-direction:column;gap:4px;}
+        .stat-label{font-size:0.75rem;font-weight:600;color:var(--lh-text-muted);text-transform:uppercase;letter-spacing:0.06em;}
+        .stat-value{font-family:var(--lh-font-heading);font-size:2rem;font-weight:800;color:var(--lh-text-headings);}
+        .stat-sub{font-size:0.75rem;color:var(--lh-text-muted);}
+
+        /* ── Alert ── */
+        .alert{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:var(--lh-radius-md);font-size:0.875rem;font-weight:500;}
+        .alert-success{background:var(--c-success-bg);color:#065F46;border:1px solid var(--c-success-border);}
+        .alert-error{background:var(--c-danger-bg);color:#B91C1C;border:1px solid var(--c-danger-border);}
+
+        /* ── Empty state ── */
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;text-align:center;color:var(--lh-text-muted);}
+        .empty-state svg{color:var(--lh-blue-200);}
+        .empty-state p{margin:0;font-size:0.9rem;}
+
+        /* ── Photo upload in modal ── */
+        .photo-drop{border:2px dashed var(--lh-border-light);border-radius:var(--lh-radius-md);padding:24px;text-align:center;cursor:pointer;transition:var(--lh-transition);background:var(--lh-blue-10);}
+        .photo-drop:hover{border-color:var(--lh-blue-400);background:var(--lh-blue-50);}
+        .photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+        .photo-preview{margin-top:12px;display:none;}
+        .photo-preview img{max-width:100%;max-height:180px;border-radius:var(--lh-radius-md);object-fit:contain;}
+
+        /* ── Modal ── */
+        .modal-overlay{position:fixed;inset:0;background:rgba(7,19,36,0.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.22s ease;}
+        .modal-overlay.open{opacity:1;pointer-events:all;}
+        .modal{background:#fff;border-radius:var(--lh-radius-xl);box-shadow:var(--lh-shadow-xl);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;transform:translateY(16px) scale(0.97);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);}
+        .modal-overlay.open .modal{transform:translateY(0) scale(1);}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 18px;border-bottom:1px solid var(--lh-border-subtle);}
+        .modal-title{font-family:var(--lh-font-heading);font-size:1.1rem;font-weight:700;color:var(--lh-text-headings);margin:0;}
+        .modal-close{width:32px;height:32px;border-radius:var(--lh-radius-sm);border:none;background:var(--lh-blue-25);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--lh-text-muted);transition:var(--lh-transition);}
+        .modal-close:hover{background:var(--c-danger-bg);color:var(--c-danger);}
+        .modal-body{padding:22px 26px;display:flex;flex-direction:column;gap:16px;}
+        .modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 26px 22px;border-top:1px solid var(--lh-border-subtle);}
+        .form-group{display:flex;flex-direction:column;gap:6px;}
+        .form-label{font-size:0.8125rem;font-weight:600;color:var(--lh-text-headings);}
+
+        /* ── History table ── */
+        .data-table{width:100%;border-collapse:collapse;}
+        .data-table thead th{padding:11px 18px;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--lh-text-muted);background:var(--lh-blue-25);border-bottom:1px solid var(--lh-border-subtle);white-space:nowrap;}
+        .data-table tbody tr{border-bottom:1px solid var(--lh-border-subtle);}
+        .data-table tbody tr:last-child{border-bottom:none;}
+        .data-table tbody tr:hover{background:var(--lh-blue-25);}
+        .data-table tbody td{padding:13px 18px;font-size:0.875rem;color:var(--lh-text-body);vertical-align:middle;}
+
+        /* ── Dashboard info card ── */
+        .rider-welcome{background:linear-gradient(135deg,var(--lh-navy-900) 0%,var(--lh-navy-700) 100%);border-radius:var(--lh-radius-lg);padding:28px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+        .rider-welcome-text{flex:1;min-width:0;}
+        .rider-welcome-name{font-family:var(--lh-font-heading);font-size:1.5rem;font-weight:800;color:#fff;margin:0 0 4px;}
+        .rider-welcome-sub{font-size:0.875rem;color:rgba(255,255,255,0.6);margin:0;}
+        .rider-welcome-badge{background:rgba(249,115,22,0.2);border:1px solid rgba(249,115,22,0.4);border-radius:var(--lh-radius-md);padding:14px 20px;text-align:center;flex-shrink:0;}
+        .rider-welcome-badge-num{font-family:var(--lh-font-heading);font-size:2.5rem;font-weight:800;color:#FB923C;line-height:1;}
+        .rider-welcome-badge-label{font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:2px;}
+    </style>
+</head>
+<body>
+<div class="rider-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="rider-sidebar" aria-label="Rider navigation">
+        <div class="sb-brand">
+            <div class="sb-logo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM7.5 17.5C6.67 17.5 6 16.83 6 16C6 15.17 6.67 14.5 7.5 14.5C8.33 14.5 9 15.17 9 16C9 16.83 8.33 17.5 7.5 17.5ZM12 17.5C11.17 17.5 10.5 16.83 10.5 16C10.5 15.17 11.17 14.5 12 14.5C12.83 14.5 13.5 15.17 13.5 16C13.5 16.83 12.83 17.5 12 17.5ZM16.5 17.5C15.67 17.5 15 16.83 15 16C15 15.17 15.67 14.5 16.5 14.5C17.33 14.5 18 15.17 18 16C18 16.83 17.33 17.5 16.5 17.5ZM17.2 11.8C16.88 12.28 16.34 12.56 15.77 12.56H8.23C7.66 12.56 7.12 12.28 6.8 11.8L5.35 9.63C4.9 8.95 5.39 8.04 6.2 8.04H17.8C18.61 8.04 19.1 8.95 18.65 9.63L17.2 11.8Z" fill="currentColor"/>
+                </svg>
+            </div>
+            <div class="sb-brand-text">
+                <span class="sb-wordmark">Laundry Hub</span>
+                <span class="sb-badge">Rider</span>
+            </div>
+        </div>
+
+        <nav class="sb-nav" aria-label="Rider menu">
+            <button class="sb-nav-item @(activeTab == "dashboard" ? "active" : "")" id="nav-dashboard" onclick="showPanel('dashboard')">
+                <span class="nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                </span>
+                Dashboard
+            </button>
+
+            <button class="sb-nav-item @(activeTab == "jobs" ? "active" : "")" id="nav-jobs" onclick="showPanel('jobs')">
+                <span class="nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/>
+                        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                </span>
+                My Jobs
+                @if (Model.ActiveJobs.Count > 0) {
+                    <span class="sb-job-count">@Model.ActiveJobs.Count</span>
+                }
+            </button>
+
+            <button class="sb-nav-item @(activeTab == "history" ? "active" : "")" id="nav-history" onclick="showPanel('history')">
+                <span class="nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </span>
+                History
+            </button>
+        </nav>
+
+        <div class="sb-footer">
+            <div class="sb-footer-info">
+                <div class="sb-avatar">@Initials(Model.Rider.FullName)</div>
+                <div class="sb-meta">
+                    <span class="sb-name">@Model.Rider.FullName</span>
+                    <span class="sb-role">Rider · @(Model.Rider.PhoneNumber ?? "No number")</span>
+                </div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="margin-top:10px;padding:0 10px;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;color:rgba(255,255,255,0.65);border-color:rgba(255,255,255,0.15);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Log Out
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="rider-main" aria-label="Rider main content">
+
+        @if (TempData["SuccessMessage"] != null) {
+            <div class="alert alert-success" style="margin-bottom:16px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null) {
+            <div class="alert alert-error" style="margin-bottom:16px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- ══ DASHBOARD PANEL ══ -->
+        <div class="panel @(activeTab == "dashboard" ? "active" : "")" id="panel-dashboard">
+            <div class="panel-header">
+                <div>
+                    <h1 class="panel-title">Dashboard</h1>
+                    <p class="panel-subtitle">Your pickup and delivery performance at a glance.</p>
+                </div>
+            </div>
+
+            <div class="rider-welcome">
+                <div class="rider-welcome-text">
+                    <p class="rider-welcome-name">Hey, @(Model.Rider.FullName?.Split(' ').FirstOrDefault() ?? "Rider")! 👋</p>
+                    <p class="rider-welcome-sub">You have <strong style="color:#FB923C;">@Model.ActiveJobs.Count active job@(Model.ActiveJobs.Count == 1 ? "" : "s")</strong> waiting for action.</p>
+                </div>
+                <div class="rider-welcome-badge">
+                    <div class="rider-welcome-badge-num">@Model.ActiveJobs.Count</div>
+                    <div class="rider-welcome-badge-label">Active Jobs</div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Active Jobs</div>
+                    <div class="stat-value" style="color:#F97316">@Model.ActiveJobs.Count</div>
+                    <div class="stat-sub">Assigned + In progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Awaiting Pickup</div>
+                    <div class="stat-value" style="color:var(--lh-blue-600)">@Model.ActiveJobs.Count(o => o.Status == OrderStatus.RiderAssigned)</div>
+                    <div class="stat-sub">Go pick up now</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed Jobs</div>
+                    <div class="stat-value" style="color:#10B981">@Model.TotalPickupsCompleted</div>
+                    <div class="stat-sub">Pickup or delivery</div>
+                </div>
+            </div>
+
+            @if (Model.ActiveJobs.Count > 0) {
+                <div>
+                    <h2 style="font-family:var(--lh-font-heading);font-size:1rem;font-weight:700;color:var(--lh-text-headings);margin:0 0 12px;">
+                        Active Jobs Summary
+                    </h2>
+                    <div class="jobs-grid">
+                        @foreach (var job in Model.ActiveJobs.Take(3)) {
+                            <div class="job-card">
+                                <div class="job-card-header">
+                                    <span class="job-order-num">@job.OrderNumber</span>
+                                    <span class="@StatusBadgeClass(job.Status)">@StatusLabel(job.Status)</span>
+                                </div>
+                                <div class="job-card-body">
+                                    <div class="job-info-grid">
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Customer</span>
+                                            <span class="job-info-value">@(job.Customer?.FullName ?? "—")</span>
+                                        </div>
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Pickup Date</span>
+                                            <span class="job-info-value">@job.PreferredPickupDate.ToString("MMM d") — @job.PreferredPickupTime</span>
+                                        </div>
+                                    </div>
+                                    <div class="job-actions">
+                                        <button class="btn btn-primary btn-sm" onclick="showPanel('jobs')">
+                                            View Job Details
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ══ MY JOBS PANEL ══ -->
+        <div class="panel @(activeTab == "jobs" ? "active" : "")" id="panel-jobs">
+            <div class="panel-header">
+                <div>
+                    <h1 class="panel-title">My Jobs</h1>
+                    <p class="panel-subtitle">Orders assigned to you for pickup or delivery. Follow the steps below for each job.</p>
+                </div>
+            </div>
+
+            @if (!Model.ActiveJobs.Any()) {
+                <div class="card">
+                    <div class="card-body">
+                        <div class="empty-state">
+                            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/>
+                                <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                            </svg>
+                            <p>No active pickup or delivery jobs right now.<br>New jobs assigned by the admin will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            } else {
+                <div class="jobs-grid">
+                    @foreach (var job in Model.ActiveJobs) {
+                        var isDeliveryJob = job.Status == OrderStatus.OutForDelivery;
+                        var assignedAt = isDeliveryJob ? job.DeliveryAssignedAt : job.RiderAssignedAt;
+                        var assignedLabel = isDeliveryJob ? "Dispatched" : "Assigned";
+                        var svcList = string.Join(", ", job.OrderServices.Select(os => os.Service?.Name ?? "?"));
+                        <div class="job-card">
+                            <div class="job-card-header">
+                                <div>
+                                    <span class="job-order-num">@job.OrderNumber</span>
+                                    <div style="font-size:0.75rem;color:var(--lh-text-muted);margin-top:2px;">@assignedLabel @(assignedAt?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "—")</div>
+                                </div>
+                                <span class="@StatusBadgeClass(job.Status)">@StatusLabel(job.Status)</span>
+                            </div>
+                            <div class="job-card-body">
+                                <div class="job-info-grid">
+                                    <div class="job-info-item">
+                                        <span class="job-info-label">Customer</span>
+                                        <span class="job-info-value">@(job.Customer?.FullName ?? "—")</span>
+                                    </div>
+                                    <div class="job-info-item">
+                                        <span class="job-info-label">Contact</span>
+                                        <span class="job-info-value">
+                                            <a href="tel:@job.ContactNumber" style="color:var(--lh-blue-600);text-decoration:none;font-weight:600;">@job.ContactNumber</a>
+                                        </span>
+                                    </div>
+                                    @if (isDeliveryJob) {
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Dispatched</span>
+                                            <span class="job-info-value">@(job.DeliveryAssignedAt?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "—")</span>
+                                        </div>
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Delivery Address</span>
+                                            <span class="job-info-value">@job.PickupLocation</span>
+                                        </div>
+                                    } else {
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Pickup Date</span>
+                                            <span class="job-info-value">@job.PreferredPickupDate.ToString("MMM d, yyyy")</span>
+                                        </div>
+                                        <div class="job-info-item">
+                                            <span class="job-info-label">Pickup Time</span>
+                                            <span class="job-info-value">@job.PreferredPickupTime</span>
+                                        </div>
+                                    }
+                                </div>
+                                @if (!isDeliveryJob) {
+                                    <div class="job-info-item" style="margin-bottom:16px;">
+                                        <span class="job-info-label">Pickup Address</span>
+                                        <span class="job-info-value" style="font-size:0.9rem;">@job.PickupLocation</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(svcList)) {
+                                    <div class="job-services">
+                                        <strong>Services:</strong> @svcList
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(job.SpecialInstructions)) {
+                                    <div style="background:var(--lh-blue-25);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-md);padding:10px 14px;font-size:0.8125rem;color:var(--lh-text-body);margin-bottom:16px;">
+                                        <strong>Special Instructions:</strong> @job.SpecialInstructions
+                                    </div>
+                                }
+                                <div class="job-actions">
+                                    @if (job.Status == OrderStatus.RiderAssigned) {
+                                        <button class="btn btn-orange" onclick="openPickupModal(@job.Id, '@job.OrderNumber')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            Mark as Picked Up
+                                        </button>
+                                    }
+                                    @if (job.Status == OrderStatus.PickedUp) {
+                                        <form method="post" asp-controller="Rider" asp-action="MarkInTransit" asp-route-id="@job.Id" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-primary">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                                In Transit to Shop
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (job.Status == OrderStatus.PickedUp || job.Status == OrderStatus.InTransitToShop) {
+                                        <form method="post" asp-controller="Rider" asp-action="ArrivedAtShop" asp-route-id="@job.Id" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-success">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                Arrived at Shop
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (job.Status == OrderStatus.OutForDelivery) {
+                                        <button class="btn btn-success" onclick="openDeliveryModal(@job.Id, '@job.OrderNumber')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            Mark Delivered
+                                        </button>
+                                    }
+                                    @if (!string.IsNullOrEmpty(job.PickupPhotoPath)) {
+                                        <a href="@job.PickupPhotoPath" target="_blank" class="btn btn-ghost btn-sm">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                            Pickup Photo
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrEmpty(job.DeliveryPhotoPath)) {
+                                        <a href="@job.DeliveryPhotoPath" target="_blank" class="btn btn-ghost btn-sm">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                            Delivery Photo
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- ══ HISTORY PANEL ══ -->
+        <div class="panel @(activeTab == "history" ? "active" : "")" id="panel-history">
+            <div class="panel-header">
+                <div>
+                    <h1 class="panel-title">Job History</h1>
+                    <p class="panel-subtitle">Completed pickup and delivery assignments.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body" style="padding:0;">
+                    @if (!Model.JobHistory.Any()) {
+                        <div class="empty-state">
+                            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <p>No completed jobs yet.<br>Completed pickup and delivery assignments will appear here.</p>
+                        </div>
+                    } else {
+                        <table class="data-table" aria-label="Job history">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Services</th>
+                                    <th>Assignment</th>
+                                    <th>Completed</th>
+                                    <th>Current Status</th>
+                                    <th>Photo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var job in Model.JobHistory) {
+                                    var isDeliveryHistory = job.DeliveryRiderId == Model.Rider.Id;
+                                    var activityLabel = isDeliveryHistory ? "Delivery" : "Pickup";
+                                    var activityDate = isDeliveryHistory ? job.DeliveredAt : job.PickedUpAt;
+                                    var photoPath = isDeliveryHistory ? job.DeliveryPhotoPath : job.PickupPhotoPath;
+                                    var svc = string.Join(", ", job.OrderServices.Select(os => os.Service?.Name ?? "?"));
+                                    <tr>
+                                        <td style="font-weight:700;color:var(--lh-blue-600);font-size:0.825rem;font-family:var(--lh-font-heading);">@job.OrderNumber</td>
+                                        <td>
+                                            <div style="font-weight:600;color:var(--lh-text-headings);font-size:0.875rem;">@(job.Customer?.FullName ?? "—")</div>
+                                            <div style="font-size:0.75rem;color:var(--lh-text-muted);">@job.ContactNumber</div>
+                                        </td>
+                                        <td style="font-size:0.8125rem;">@(svc.Length > 40 ? svc.Substring(0, 37) + "..." : svc)</td>
+                                        <td style="font-size:0.8125rem;">@activityLabel</td>
+                                        <td style="font-size:0.8125rem;">@(activityDate?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "—")</td>
+                                        <td><span class="@StatusBadgeClass(job.Status)">@StatusLabel(job.Status)</span></td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(photoPath)) {
+                                                <a href="@photoPath" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">View</a>
+                                            } else {
+                                                <span style="color:var(--lh-text-muted);font-size:0.8125rem;">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- MODAL: Mark as Picked Up (with photo upload) -->
+<div class="modal-overlay" id="modal-pickup" role="dialog" aria-modal="true" aria-labelledby="modal-pickup-title">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-pickup-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Mark as Picked Up
+            </h2>
+            <button class="modal-close" onclick="closePickupModal()" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="form-pickup" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div style="background:var(--lh-blue-25);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-md);padding:12px 16px;font-size:0.875rem;color:var(--lh-text-body);">
+                    Confirming pickup for order: <strong id="pickup-order-display" style="color:var(--lh-blue-600)"></strong>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pickup Photo <span style="color:var(--lh-text-muted);font-weight:400;">(optional but recommended)</span></label>
+                    <div class="photo-drop" id="photo-drop-zone" onclick="document.getElementById('pickup-photo-input').click()">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lh-text-muted);margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p style="margin:0;font-size:0.875rem;color:var(--lh-text-muted);">Click to take/upload a photo of the laundry being picked up</p>
+                        <input type="file" id="pickup-photo-input" name="photo" accept="image/*" capture="environment" style="display:none;" onchange="previewPhoto(this)" />
+                    </div>
+                    <div class="photo-preview" id="photo-preview-wrap">
+                        <img id="photo-preview-img" src="" alt="Pickup photo preview" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closePickupModal()">Cancel</button>
+                <button type="submit" class="btn btn-orange">
+                    <svg width="14" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirm Pickup
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Mark as Delivered (with delivery photo) -->
+<div class="modal-overlay" id="modal-delivery" role="dialog" aria-modal="true" aria-labelledby="modal-delivery-title">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-delivery-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
+                Complete Delivery
+            </h2>
+            <button class="modal-close" onclick="closeDeliveryModal()" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="form-delivery" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div style="background:var(--lh-blue-25);border:1px solid var(--lh-border-subtle);border-radius:var(--lh-radius-md);padding:12px 16px;font-size:0.875rem;color:var(--lh-text-body);">
+                    Confirming delivery for order: <strong id="delivery-order-display" style="color:var(--lh-blue-600)"></strong>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Proof of Delivery Photo <span style="color:var(--c-danger);font-weight:600;">(required)</span></label>
+                    <div class="photo-drop" id="delivery-drop-zone" onclick="document.getElementById('delivery-photo-input').click()">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lh-text-muted);margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p style="margin:0;font-size:0.875rem;color:var(--lh-text-muted);">Click to take or upload proof of delivery photo</p>
+                        <input type="file" id="delivery-photo-input" name="photo" accept="image/jpeg,image/png,image/webp" capture="environment" required style="display:none;" onchange="previewDeliveryPhoto(this)" />
+                    </div>
+                    <div class="photo-preview" id="delivery-preview-wrap">
+                        <img id="delivery-preview-img" src="" alt="Delivery photo preview" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeDeliveryModal()">Cancel</button>
+                <button type="submit" class="btn btn-success" style="background:#059669;border-color:#059669;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirm Delivered
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+/* ── Panel navigation ── */
+function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sb-nav-item').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.add('active');
+    const nav = document.getElementById('nav-' + name);
+    if (nav) nav.classList.add('active');
+}
+
+/* ── Pickup modal ── */
+function openPickupModal(orderId, orderNumber) {
+    const form = document.getElementById('form-pickup');
+    form.action = '/Rider/MarkPickedUp/' + orderId;
+    document.getElementById('pickup-order-display').textContent = orderNumber;
+    // Reset photo
+    document.getElementById('pickup-photo-input').value = '';
+    document.getElementById('photo-preview-wrap').style.display = 'none';
+    document.getElementById('photo-preview-img').src = '';
+    document.getElementById('modal-pickup').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closePickupModal() {
+    document.getElementById('modal-pickup').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+/* ── Delivery modal ── */
+function openDeliveryModal(orderId, orderNumber) {
+    const form = document.getElementById('form-delivery');
+    form.action = '/Rider/MarkDelivered/' + orderId;
+    document.getElementById('delivery-order-display').textContent = orderNumber;
+    document.getElementById('delivery-photo-input').value = '';
+    document.getElementById('delivery-preview-wrap').style.display = 'none';
+    document.getElementById('delivery-preview-img').src = '';
+    document.getElementById('modal-delivery').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeDeliveryModal() {
+    document.getElementById('modal-delivery').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function previewDeliveryPhoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('delivery-preview-img').src = e.target.result;
+            document.getElementById('delivery-preview-wrap').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+function previewPhoto(input) {
+    const wrap = document.getElementById('photo-preview-wrap');
+    const img  = document.getElementById('photo-preview-img');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { img.src = e.target.result; wrap.style.display = 'block'; };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+/* ── Close on overlay click / Escape ── */
+document.getElementById('modal-pickup').addEventListener('click', function(e) {
+    if (e.target === this) closePickupModal();
+});
+document.getElementById('modal-delivery').addEventListener('click', function(e) {
+    if (e.target === this) closeDeliveryModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePickupModal();
+        closeDeliveryModal();
+    }
+});
+
+/* ── Auto-dismiss flash alerts ── */
+document.querySelectorAll('.alert').forEach(a => {
+    setTimeout(() => { a.style.opacity = '0'; a.style.transition = 'opacity 0.5s'; setTimeout(() => a.remove(), 500); }, 4000);
+});
+</script>
+</body>
+</html>

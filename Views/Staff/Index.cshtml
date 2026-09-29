@@ -1,0 +1,105 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Staff | Laundry Hub Davao City";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans for headings, Inter for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================================================================
+           CSS Variables & Design Tokens — Laundry Hub Blue & White Palette
+           ========================================================================== */
+        :root {
+            /* Color Palette: Blue & White */
+            --lh-navy-950: #071324;
+            --lh-navy-900: #0B1E36;
+            --lh-navy-800: #102A4C;
+            --lh-navy-700: #163865;
+            --lh-blue-600: #1D4ED8;
+            --lh-blue-500: #1E60D5; /* Primary Mid-Blue */
+            --lh-blue-400: #3B82F6;
+            --lh-blue-300: #60A5FA;
+            --lh-blue-200: #93C5FD;
+            --lh-blue-100: #BFDBFE;
+            --lh-blue-50:  #EBF3FE; /* Light Blue Tint */
+            --lh-blue-25:  #F4F8FE; /* Ultra Light Blue Tint */
+            --lh-blue-10:  #F8FAFD;
+
+            --lh-white: #FFFFFF;
+            --lh-text-headings: #0B1E36; /* Deep Navy */
+            --lh-text-body: #334E68;     /* Slate Navy for Body */
+            --lh-text-muted: #627D98;    /* Muted Blue Gray */
+            --lh-border-light: #D8E6F8;  /* Soft Blue Border */
+            --lh-border-subtle: #E2EDFA;
+            --lh-border-focus: #1E60D5;
+
+            /* Typography */
+            --lh-font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --lh-font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+            /* Elevations / Shadows */
+            --lh-shadow-sm: 0 2px 6px rgba(16, 42, 76, 0.04);
+            --lh-shadow-md: 0 8px 24px rgba(16, 42, 76, 0.08);
+            --lh-shadow-lg: 0 16px 36px rgba(16, 42, 76, 0.12);
+            --lh-shadow-xl: 0 24px 50px rgba(16, 42, 76, 0.16);
+
+            /* Transitions */
+            --lh-transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            --lh-radius-sm: 6px;
+            --lh-radius-md: 10px;
+            --lh-radius-lg: 16px;
+            --lh-radius-xl: 24px;
+        }
+
+        /* Global Reset & Full-Width Foundation */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+            background-color: var(--lh-white);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            font-family: var(--lh-font-body);
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--lh-text-body);
+            background-color: var(--lh-white);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--lh-blue-400);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Staff dashboard — content coming soon -->
+    <div id="staff-root"></div>
+
+</body>
+</html>
